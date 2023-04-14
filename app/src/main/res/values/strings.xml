@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">VirtualWardrobe</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_add_clothing_item">AddClothingItemActivity</string>
 </resources>
