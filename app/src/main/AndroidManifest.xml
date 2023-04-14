@@ -14,9 +14,13 @@
         android:theme="@style/Theme.VirtualWardrobe"
         tools:targetApi="31">
         <activity
+            android:name=".AddClothingItemActivity"
+            android:exported="false"
+            android:label="@string/title_activity_add_clothing_item"
+            android:theme="@style/Theme.VirtualWardrobe" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/title_activity_main"
             android:theme="@style/Theme.VirtualWardrobe">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
