@@ -1,18 +1,22 @@
 package com.thekempter.virtualwardrobe
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Create
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -29,6 +33,7 @@ import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -66,66 +71,86 @@ class MainActivity : ComponentActivity() {
                     icon = Icons.Rounded.Settings,
                     name = "Settings",
                     route = "settings",
+                ),
+                FloatingNavigationItem(
+                    icon = Icons.Rounded.Add,
+                    name = "Add New Clothing",
+                    route = "addNewClothingItem"
                 )
             )
             VirtualWardrobe(navController = navController, items = items)
         }
     }
-}
 
-data class BottomNavigationItem(
-    val name: String,
-    val route: String,
-    val icon: ImageVector
-)
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun VirtualWardrobe(navController: NavHostController, items: List<NavigationItem>){
+        val backStackEntry = navController.currentBackStackEntryAsState()
+        VirtualWardrobeTheme {
+            Scaffold(
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.background
+                    ) {
+                        items.forEach{ item ->
+                            if (item is BottomNavigationItem){
+                                val selected = item.route == backStackEntry.value?.destination?.route
 
-
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VirtualWardrobe(navController: NavHostController, items: List<BottomNavigationItem>){
-    val backStackEntry = navController.currentBackStackEntryAsState()
-    VirtualWardrobeTheme {
-        Scaffold(
-            bottomBar = {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.background
-                ) {
-                    items.forEach{ item ->
-                        val selected = item.route == backStackEntry.value?.destination?.route
-
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = { navController.navigate(item.route) },
-                            label = {
-                                Text(
-                                    text = item.name,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = "${item.name} Icon"
+                                NavigationBarItem(
+                                    selected = selected,
+                                    onClick = { navController.navigate(item.route) },
+                                    label = {
+                                        Text(
+                                            text = item.name,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    },
+                                    icon = {
+                                        Icon(
+                                            imageVector = item.icon,
+                                            contentDescription = "${item.name} Icon"
+                                        )
+                                    }
                                 )
                             }
-                        )
+                        }
                     }
-                }
-            },
-            content = {
-                NavHost(navController = navController, startDestination = items.first().route){
-                    items.forEach{ item ->
-                        composable(item.route) {
-                            when(item.route) {
-                                "home" -> HomeScreen()
-                                "collection" -> CollectionScreen()
-                                "outfits" -> OutfitScreen()
-                                "settings" -> SettingsScreen()
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = {
+                            val intent = Intent(this@MainActivity, AddClothingItemActivity::class.java)
+                            startActivity(intent)
+                        },
+                        content = {
+                            val item: FloatingNavigationItem = items.filterIsInstance<FloatingNavigationItem>().first()
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = "${item.name} Icon"
+                            )
+                        }
+                    )
+                },
+                content = {
+                    NavHost(navController = navController, startDestination = items.first().route){
+                        items.forEach{ item ->
+                            composable(item.route) {
+                                when(item.route) {
+                                    "home" -> HomeScreen()
+                                    "collection" -> CollectionScreen()
+                                    "outfits" -> OutfitScreen()
+                                    "settings" -> SettingsScreen()
+                                    "addNewClothingItem" -> AddClothingItemScreen()
+                                }
                             }
                         }
                     }
                 }
+            )
+        }
+    }
+
     fun getAllClothings(): List<ClothingItem> {
         return clothingViewModel.clothings.value ?: emptyList()
     }
@@ -138,56 +163,71 @@ fun VirtualWardrobe(navController: NavHostController, items: List<BottomNavigati
             clothings.forEach { clothingItem -> 
                 ClothingItemDisplay(clothingItem = clothingItem)
             }
-        )
+        }
     }
-}
 
-@Composable
-fun HomeScreen(){
-    Column() {
-        ClothingItem("Blue Jeans", "Classic denim jeans")
-        ClothingItem("Red T-shirt", "Soft cotton T-shirt")
-        ClothingItem("Black Sneakers", "Sleek and stylish sneakers")
+    @Composable
+    fun CollectionScreen(){
+        Column() {
+//        ClothingItemDisplay("Red T-shirt", "Soft cotton T-shirt")
+        }
     }
-}
 
-@Composable
-fun CollectionScreen(){
-    Column() {
-        ClothingItem("Red T-shirt", "Soft cotton T-shirt")
+    @Composable
+    fun OutfitScreen(){
+        Column() {
+//        ClothingItemDisplay("Black Sneakers", "Sleek and stylish sneakers")
+        }
     }
-}
 
-@Composable
-fun OutfitScreen(){
-    Column() {
-        ClothingItem("Black Sneakers", "Sleek and stylish sneakers")
+    @Composable
+    fun SettingsScreen(){
+        Column() {
+//        ClothingItemDisplay("Blue-ish Jeans", "Classic denim jeans")
+        }
     }
-}
 
-@Composable
-fun SettingsScreen(){
-    Column() {
-        ClothingItem("Blue-ish Jeans", "Classic denim jeans")
+    @Composable
+    fun AddClothingItemScreen(){
+
     }
-}
 
 
-@Composable
-fun ClothingItem(itemName: String, itemDescription: String) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = itemName, style = MaterialTheme.typography.headlineMedium)
-            Text(text = itemDescription, style = MaterialTheme.typography.bodyMedium)
+    @Composable
+    fun ClothingItemDisplay(clothingItem: ClothingItem) {
+        Surface(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
+                Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
+                Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
+                Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
+                Text(text = clothingItem.size, style = MaterialTheme.typography.bodyMedium)
+                Text(text = clothingItem.type, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun GreetingPreview() {
+        VirtualWardrobeTheme {
+            HomeScreen()
         }
     }
 }
 
+open class NavigationItem(
+    open val name: String,
+    open val route: String,
+    open val icon: ImageVector
+)
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    VirtualWardrobeTheme {
-        HomeScreen()
-    }
-}
+data class BottomNavigationItem(
+    override val name: String,
+    override val route: String,
+    override val icon: ImageVector) : NavigationItem(name, route, icon)
+
+data class FloatingNavigationItem(
+    override val name: String,
+    override val route: String,
+    override val icon: ImageVector) : NavigationItem(name, route, icon)
