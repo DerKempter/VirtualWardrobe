@@ -19,22 +19,3 @@ data class ClothingItem(
     val material: String,
     val imageUrl: String
 )
-
-@Dao
-interface ClothingDao {
-    @Insert
-    suspend fun insert(item: ClothingItem)
-
-    @Update
-    suspend fun update(item: ClothingItem)
-
-    @Delete
-    suspend fun delete(item: ClothingItem)
-
-    @Query("SELECT * FROM clothing_items")
-    suspend fun getAllItems(): List<ClothingItem>
-
-    @Query("SELECT * FROM clothing_items WHERE type = :type")
-    suspend fun getItemsByType(type: String): List<ClothingItem>
-}
-
