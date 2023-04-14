@@ -4,7 +4,13 @@ import android.app.Application
 import androidx.room.Room
 
 class VirtualWardrobeApplication : Application() {
-    val database by lazy {
-        Room.databaseBuilder(this, ClothingDatabase::class.java, "clothing_db").build()
+    companion object{
+        lateinit var database: ClothingDatabase
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        database = Room.databaseBuilder(this, ClothingDatabase::class.java, "clothing_db").build()
     }
 }
