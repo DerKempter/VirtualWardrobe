@@ -9,17 +9,17 @@ import androidx.room.Update
 @Dao
 interface ClothingDao {
     @Insert
-    suspend fun insert(item: ClothingItem)
+    fun insert(item: ClothingItem)
 
     @Update
-    suspend fun update(item: ClothingItem)
+    fun update(item: ClothingItem)
 
     @Delete
-    suspend fun delete(item: ClothingItem)
+    fun delete(item: ClothingItem)
 
     @Query("SELECT * FROM clothing_items")
-    suspend fun getAllClothes(): List<ClothingItem>
+    fun getAllClothes(): List<ClothingItem>
 
     @Query("SELECT * FROM clothing_items WHERE type = :type")
-    suspend fun getItemsByType(type: String): List<ClothingItem>
+    fun getItemsByType(type: String): List<ClothingItem>
 }

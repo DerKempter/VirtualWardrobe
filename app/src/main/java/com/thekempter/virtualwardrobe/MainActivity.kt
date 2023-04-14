@@ -35,6 +35,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 
 class MainActivity : ComponentActivity() {
+
+    private val clothingViewModel: ClothingViewModel
+        get() {
+            val clothingViewModel: ClothingViewModel by viewModels { ClothingViewModel.Factory }
+            return clothingViewModel
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -119,6 +126,17 @@ fun VirtualWardrobe(navController: NavHostController, items: List<BottomNavigati
                         }
                     }
                 }
+    fun getAllClothings(): List<ClothingItem> {
+        return clothingViewModel.clothings.value ?: emptyList()
+    }
+
+    @Composable
+    fun HomeScreen(){
+        val clothings = getAllClothings()
+
+        val column = Column() {
+            clothings.forEach { clothingItem -> 
+                ClothingItemDisplay(clothingItem = clothingItem)
             }
         )
     }

@@ -1,19 +1,32 @@
 package com.thekempter.virtualwardrobe
 
-class ClothingRepository(private val clothingDao: ClothingDao) : ClothingRepositoryInterface {
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+
+class ClothingRepository(private val clothingDatabase: ClothingDatabase) : ClothingRepositoryInterface {
+    private val clothingDao = clothingDatabase.clothingDao()
+
     override suspend fun addItem(item: ClothingItem) {
-        clothingDao.insert(item)
+        return withContext(Dispatchers.IO){
+            clothingDao.insert(item)
+        }
     }
 
     override suspend fun updateItem(item: ClothingItem) {
-        clothingDao.update(item)
+        return withContext(Dispatchers.IO){
+            clothingDao.update(item)
+        }
     }
 
     override suspend fun deleteItem(item: ClothingItem) {
-        clothingDao.delete(item)
+        return withContext(Dispatchers.IO){
+            clothingDao.delete(item)
+        }
     }
 
     override suspend fun getAllItems(): List<ClothingItem> {
-        return clothingDao.getAllClothes()
+        return withContext(Dispatchers.IO){
+            clothingDao.getAllClothes()
+        }
     }
 }
