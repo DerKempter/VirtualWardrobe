@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 class WardrobeRepository(private val wardrobeDatabase: WardrobeDatabase) : WardrobeRepositoryInterface {
     private val clothingDao = wardrobeDatabase.clothingDao()
     private val outfitDao = wardrobeDatabase.outfitDao()
+    private val seasonDao = wardrobeDatabase.seasonDao()
 
     override suspend fun addClothing(item: ClothingItem) {
         return withContext(Dispatchers.IO){
@@ -52,6 +53,30 @@ class WardrobeRepository(private val wardrobeDatabase: WardrobeDatabase) : Wardr
     override suspend fun getAllOutfits(): List<Outfit> {
         return withContext(Dispatchers.IO){
             outfitDao.getAllOutfits()
+        }
+    }
+
+    override suspend fun getAllSeasons(): List<Season> {
+        return withContext(Dispatchers.IO){
+            seasonDao.getAllSeasons()
+        }
+    }
+
+    override suspend fun getAllClothingTypes(): List<ClothingType> {
+        return withContext(Dispatchers.IO){
+            clothingDao.getAllTypes()
+        }
+    }
+
+    override suspend fun getSeasonsByClothingId(item: ClothingItem): List<Season> {
+        return withContext(Dispatchers.IO) {
+            seasonDao.getSeasonsForClothingItem(item.id)
+        }
+    }
+
+    override suspend fun getClothingTypeByClothing(item: ClothingItem): ClothingType {
+        return withContext(Dispatchers.IO) {
+            clothingDao.getTypeForClothing(item.typeId)
         }
     }
 }

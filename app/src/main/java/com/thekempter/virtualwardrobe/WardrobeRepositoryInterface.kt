@@ -9,4 +9,8 @@ interface WardrobeRepositoryInterface {
     suspend fun deleteClothing(item: Outfit)
     suspend fun getAllClothes(): List<ClothingItem>
     suspend fun getAllOutfits(): List<Outfit>
+    suspend fun getAllSeasons(): List<Season>
+    suspend fun getAllClothingTypes(): List<ClothingType>
+    suspend fun getSeasonsByClothingId(item: ClothingItem): List<Season>
+    suspend fun getClothingTypeByClothing(item: ClothingItem): ClothingType
 }

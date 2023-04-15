@@ -25,4 +25,7 @@ interface SeasonDao {
 
     @Delete
     fun deleteSeason(season: Season)
+
+    @Query("SELECT seasons.* FROM seasons INNER JOIN clothing_item_season ON seasons.id = clothing_item_season.seasonId WHERE clothing_item_season.clothingItemId = :clothingId")
+    fun getSeasonsForClothingItem(clothingId: Int): List<Season>
 }

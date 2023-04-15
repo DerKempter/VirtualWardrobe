@@ -6,15 +6,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Create
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -33,6 +40,8 @@ import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -181,25 +190,44 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun getAllClothings(): List<ClothingItem> {
-        return clothingViewModel.clothings.value ?: emptyList()
+    fun getAllClothings(): LiveData<List<ClothingItem>> {
+        return clothingViewModel.clothings
+    }
+
+    fun getSeasonsForClothing(item: ClothingItem): LiveData<List<Season>> {
+        return clothingViewModel.getSeasonsForClothingId(item)
+    }
+
+    fun getClothingTypeForClothing(item: ClothingItem): LiveData<ClothingType> {
+        return clothingViewModel.getClothingTypeForClothingId(item)
+    }
+
+    fun getAllSeasons(): LiveData<List<Season>> {
+        return clothingViewModel.getAllSeasons()
     }
 
     @Composable
     fun HomeScreen(){
-        val clothings = getAllClothings()
 
-        val column = Column() {
-            clothings.forEach { clothingItem -> 
-                ClothingItemDisplay(clothingItem = clothingItem)
-            }
-        }
     }
 
     @Composable
     fun CollectionScreen(){
+        val clothingsLiveData = getAllClothings()
+
         Column() {
-//        ClothingItemDisplay("Red T-shirt", "Soft cotton T-shirt")
+            val clothings = clothingsLiveData.value ?: emptyList()
+            clothings.forEach { clothingItem ->
+                val seasons = getSeasonsForClothing(clothingItem)
+                val allSeasons = getAllSeasons()
+                val clothingType = getClothingTypeForClothing(clothingItem)
+
+                if (seasons.value != null || clothingType.value != null){
+                    val seasonsVal = seasons.value!!
+                    val clothingTypeVal = clothingType.value!!
+                    ClothingItemDisplay(clothingItem, seasonsVal, clothingTypeVal)
+                }
+            }
         }
     }
 
@@ -212,19 +240,51 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun SettingsScreen(){
-        Column() {
-//        ClothingItemDisplay("Blue-ish Jeans", "Classic denim jeans")
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Settings",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SettingItem(label = "Manage Clothing Types", value = "Add or remove clothing types here")
+        }
+    }
+
+
+    @Composable
+    fun ClothingItemDisplay(clothingItem: ClothingItem, seasons: List<Season>, clothingType: ClothingType) {
+        seasons.map { it.name }.toSet()
+        Surface(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
+                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.padding(6.dp))
+                    Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.padding(6.dp))
+                    Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
+                }
+                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text(text = "Size " + clothingItem.size, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.padding(6.dp))
+                    Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
+                }
+                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    seasons.forEach {season ->
+                        Text(text = season.name, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.padding(6.dp))
+                    }
+                }
+            }
         }
     }
 
     @Composable
-    fun AddClothingItemScreen(){
-
-    }
-
-
-    @Composable
-    fun ClothingItemDisplay(clothingItem: ClothingItem) {
+    fun ClothingItemDetailView(clothingItem: ClothingItem, seasons: List<Season>, allSeasons: List<Season>, clothingType: ClothingType) {
+        val allSeasonsStrings = allSeasons.map { it.name }
+        var selectedItems = seasons.map { it.name }.toSet()
         Surface(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
@@ -232,8 +292,30 @@ class MainActivity : ComponentActivity() {
                 Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
                 Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
                 Text(text = clothingItem.size, style = MaterialTheme.typography.bodyMedium)
-                Text(text = clothingItem.type, style = MaterialTheme.typography.bodyMedium)
+                Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
+                MultiSelect(
+                    items = allSeasonsStrings,
+                    selectedItems = seasons.map { it.name }.toSet(),
+                    onItemSelected = {
+                            item -> selectedItems = selectedItems.plus(item)
+                    },
+                    onItemDeselected = {
+                            item -> selectedItems = selectedItems.minus(item)
+                    }
+                )
             }
+        }
+    }
+
+    @Composable
+    fun SettingItem(label: String, value: String) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(text = value)
         }
     }
 
@@ -241,9 +323,57 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun GreetingPreview() {
         VirtualWardrobeTheme {
-            HomeScreen()
+            val testClothingItem = ClothingItem(
+                0,
+                "Blaue Hose",
+                0,
+                "blue",
+                "NewYorker",
+                "10",
+                "cotton",
+                "null"
+            )
+            val testSeasons = mutableListOf<Season>(Season(0,"Spring"), Season(1,"Summer"), Season(2,"Autumn"))
+            val testAllSeasons = mutableListOf<Season>(Season(0,"Spring"), Season(1,"Summer"), Season(2,"Autumn"), Season(3,"Winter"), Season(4,"Halloween"))
+            val testClothingType = ClothingType(0, "Jeans")
+            ClothingItemDisplay(clothingItem = testClothingItem, seasons = testSeasons, clothingType = testClothingType)
         }
     }
+
+    @Composable
+    fun MultiSelect(
+        items: List<String>,
+        selectedItems: Set<String>,
+        onItemSelected: (String) -> Unit,
+        onItemDeselected: (String) -> Unit
+    ) {
+        Column {
+            items.forEach { item ->
+                Row(
+                    Modifier.clickable {
+                        if (selectedItems.contains(item)) {
+                            onItemDeselected(item)
+                        } else {
+                            onItemSelected(item)
+                        }
+                    }
+                ) {
+                    Checkbox(
+                        checked = selectedItems.contains(item),
+                        onCheckedChange = {
+                            if (it) {
+                                onItemSelected(item)
+                            } else {
+                                onItemDeselected(item)
+                            }
+                        }
+                    )
+                    Text(text = item)
+                }
+            }
+        }
+    }
+
 }
 
 open class NavigationItem(

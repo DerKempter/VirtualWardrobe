@@ -21,7 +21,7 @@ interface ClothingDao {
     @Query("SELECT * FROM clothing_items")
     fun getAllClothes(): List<ClothingItem>
 
-    @Query("SELECT * FROM clothing_items WHERE type = :type")
+    @Query("SELECT * FROM clothing_items WHERE typeId = :type")
     fun getItemsByType(type: String): List<ClothingItem>
 
     @Query("SELECT * FROM clothing_item_season WHERE clothingItemId = :clothingItemId")
@@ -32,4 +32,13 @@ interface ClothingDao {
 
     @Delete
     fun deleteClothingSeasonJunction(junction: ClothingItemSeasonCrossRef)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(type: ClothingType)
+
+    @Query("SELECT * FROM clothing_types WHERE Id = :clothingTypeId")
+    fun getTypeForClothing(clothingTypeId: Int): ClothingType
+
+    @Query("SELECT * FROM clothing_types ORDER BY name")
+    fun getAllTypes(): List<ClothingType>
 }

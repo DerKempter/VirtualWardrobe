@@ -4,7 +4,13 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [ClothingItem::class, Outfit::class, Season::class, ClothingItemSeasonCrossRef::class],
+    entities = [
+        ClothingItem::class,
+        ClothingType::class,
+        Outfit::class,
+        Season::class,
+        ClothingItemSeasonCrossRef::class
+               ],
     version = 1,
     exportSchema = true
 )

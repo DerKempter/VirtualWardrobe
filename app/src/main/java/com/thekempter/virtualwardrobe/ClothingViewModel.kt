@@ -40,6 +40,42 @@ class ClothingViewModel(
         }
     }
 
+    fun getSeasonsForClothingId(clothingItem: ClothingItem): MutableLiveData<List<Season>> {
+        val seasonsLiveData = MutableLiveData<List<Season>>()
+        scope.launch {
+            val seasons = repository.getSeasonsByClothingId(clothingItem)
+            seasonsLiveData.postValue(seasons)
+        }
+        return seasonsLiveData
+    }
+
+    fun getAllSeasons(): MutableLiveData<List<Season>> {
+        val seasonsLiveData = MutableLiveData<List<Season>>()
+        scope.launch {
+            val seasons = repository.getAllSeasons()
+            seasonsLiveData.postValue(seasons)
+        }
+        return seasonsLiveData
+    }
+
+    fun getAllTypes(): MutableLiveData<List<ClothingType>> {
+        val clothingTypesLiveData = MutableLiveData<List<ClothingType>>()
+        scope.launch {
+            val clothingTypes = repository.getAllClothingTypes()
+            clothingTypesLiveData.postValue(clothingTypes)
+        }
+        return clothingTypesLiveData
+    }
+
+    fun getClothingTypeForClothingId(clothingItem: ClothingItem): MutableLiveData<ClothingType> {
+        val clothingTypeLiveData = MutableLiveData<ClothingType>()
+        scope.launch {
+            val clothingType = repository.getClothingTypeByClothing(clothingItem)
+            clothingTypeLiveData.postValue(clothingType)
+        }
+        return clothingTypeLiveData
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

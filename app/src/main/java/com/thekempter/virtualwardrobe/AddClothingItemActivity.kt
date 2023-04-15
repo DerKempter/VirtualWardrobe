@@ -3,16 +3,15 @@ package com.thekempter.virtualwardrobe
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -26,14 +25,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,8 +46,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class AddClothingItemActivity : ComponentActivity() {
+
+    private val clothingViewModel: ClothingViewModel
+        get() {
+            val clothingViewModel: ClothingViewModel by viewModels { ClothingViewModel.Factory }
+            return clothingViewModel
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -53,7 +65,7 @@ class AddClothingItemActivity : ComponentActivity() {
     }
 
     var name = mutableStateOf("")
-    var type = mutableStateOf("")
+    var type = mutableStateOf(ClothingType(-1, "dummy"))
     var color = mutableStateOf("")
     var brand = mutableStateOf("")
     var size = mutableStateOf("")
@@ -65,7 +77,7 @@ class AddClothingItemActivity : ComponentActivity() {
     @Composable
     fun AddClothingItemScreen(
         name: MutableState<String>,
-        type: MutableState<String>,
+        type: MutableState<ClothingType>,
         color: MutableState<String>,
         brand: MutableState<String>,
         size: MutableState<String>,
@@ -74,6 +86,10 @@ class AddClothingItemActivity : ComponentActivity() {
         ) {
         val scrollState = rememberScrollState()
         val context = LocalContext.current
+        val allTypes = clothingViewModel.getAllTypes()
+        if (allTypes.value != null){
+            type.value = allTypes.value!!.first()
+        }
 
         val launcherGallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()){
                 uri ->
@@ -86,8 +102,11 @@ class AddClothingItemActivity : ComponentActivity() {
         }
 
         val imageUri: Uri = remember {
+            val currentDateTime = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+            val currentDateTimeFormatted = currentDateTime.format(formatter)
             val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "picture.jpg")
+                put(MediaStore.Images.Media.DISPLAY_NAME, "$currentDateTimeFormatted.jpg")
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             }
             // Insert a new empty image into the MediaStore
@@ -104,6 +123,10 @@ class AddClothingItemActivity : ComponentActivity() {
 
 
         VirtualWardrobeTheme{
+            var allClothingTypes = emptyList<ClothingType>()
+            if (allTypes.value != null){
+                allClothingTypes = allTypes.value!!
+            }
             Scaffold(
                 content = {
                     Box(
@@ -129,6 +152,7 @@ class AddClothingItemActivity : ComponentActivity() {
                                                 0 -> {
                                                     launcherCamera.launch(imageUri)
                                                 }
+
                                                 1 -> {
                                                     launcherGallery.launch(
                                                         PickVisualMediaRequest(
@@ -136,6 +160,7 @@ class AddClothingItemActivity : ComponentActivity() {
                                                         )
                                                     )
                                                 }
+
                                                 else -> dialog.dismiss()
                                             }
                                         }
@@ -159,12 +184,19 @@ class AddClothingItemActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth()
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedTextField(
-                                value = type.value,
-                                onValueChange = { type.value = it },
-                                label = { Text("Type") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            var expanded by remember { mutableStateOf(false) }
+                            var selectedOption by remember { mutableStateOf(type.value) }
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                allClothingTypes.forEach {type ->
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            selectedOption = type
+                                            expanded = false
+                                        },
+                                        text = { Text(text = type.name) }
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             OutlinedTextField(
                                 value = color.value,
@@ -214,12 +246,25 @@ class AddClothingItemActivity : ComponentActivity() {
         }
     }
 
+    fun onSaveButtonClicked() {
+        val clothingType = type.value
+        val clothingItem = ClothingItem(
+            name = name.value,
+            material = material.value,
+            color = color.value,
+            brand = brand.value,
+            size = size.value,
+            imageUrl = imageUrl.value,
+            typeId = clothingType.id
+        )
+    }
+
     @Preview(showBackground = true)
     @Composable
     fun GreetingPreview() {
         AddClothingItemScreen(
             remember { mutableStateOf("") },
-            remember { mutableStateOf("") },
+            remember { mutableStateOf(ClothingType(0, "placeholder")) },
             remember { mutableStateOf("") },
             remember { mutableStateOf("") },
             remember { mutableStateOf("") },
