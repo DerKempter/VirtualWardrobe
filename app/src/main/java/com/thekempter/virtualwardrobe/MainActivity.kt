@@ -76,6 +76,11 @@ class MainActivity : ComponentActivity() {
                     icon = Icons.Rounded.Add,
                     name = "Add New Clothing",
                     route = "addNewClothingItem"
+                ),
+                FloatingNavigationItem(
+                    icon = Icons.Rounded.Add,
+                    name = "Add New Outfit",
+                    route = "addNewOutfitItem"
                 )
             )
             VirtualWardrobe(navController = navController, items = items)
@@ -87,6 +92,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun VirtualWardrobe(navController: NavHostController, items: List<NavigationItem>){
         val backStackEntry = navController.currentBackStackEntryAsState()
+        val currentRoute = backStackEntry.value?.destination?.route
         VirtualWardrobeTheme {
             Scaffold(
                 bottomBar = {
@@ -95,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         items.forEach{ item ->
                             if (item is BottomNavigationItem){
-                                val selected = item.route == backStackEntry.value?.destination?.route
+                                val selected = item.route == currentRoute
 
                                 NavigationBarItem(
                                     selected = selected,
@@ -118,19 +124,44 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = {
-                            val intent = Intent(this@MainActivity, AddClothingItemActivity::class.java)
-                            startActivity(intent)
-                        },
-                        content = {
-                            val item: FloatingNavigationItem = items.filterIsInstance<FloatingNavigationItem>().first()
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = "${item.name} Icon"
-                            )
-                        }
-                    )
+                    if(currentRoute == "collection"){
+                        FloatingActionButton(
+                            onClick = {
+                                val intent =
+                                    Intent(this@MainActivity, AddClothingItemActivity::class.java)
+                                startActivity(intent)
+                            },
+                            content = {
+                                val item: FloatingNavigationItem =
+                                    items.filterIsInstance<FloatingNavigationItem>().first { fni ->
+                                        fni.route == "addNewClothingItem"
+                                    }
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = "${item.name} Icon"
+                                )
+                            }
+                        )
+                    }
+                    else if (currentRoute == "outfits"){
+                        FloatingActionButton(
+                            onClick = {
+                                val intent =
+                                    Intent(this@MainActivity, AddOutfitActivity::class.java)
+                                startActivity(intent)
+                            },
+                            content = {
+                                val item: FloatingNavigationItem =
+                                    items.filterIsInstance<FloatingNavigationItem>().first { fni ->
+                                        fni.route == "addNewOutfitItem"
+                                    }
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = "${item.name} Icon"
+                                )
+                            }
+                        )
+                    }
                 },
                 content = {
                     NavHost(navController = navController, startDestination = items.first().route){
@@ -141,7 +172,6 @@ class MainActivity : ComponentActivity() {
                                     "collection" -> CollectionScreen()
                                     "outfits" -> OutfitScreen()
                                     "settings" -> SettingsScreen()
-                                    "addNewClothingItem" -> AddClothingItemScreen()
                                 }
                             }
                         }
