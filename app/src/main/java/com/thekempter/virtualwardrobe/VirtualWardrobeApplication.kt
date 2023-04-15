@@ -5,14 +5,14 @@ import androidx.room.Room.databaseBuilder
 
 class VirtualWardrobeApplication : Application() {
 
-    private lateinit var database: ClothingDatabase
-    lateinit var repository: ClothingRepository
+    private lateinit var database: WardrobeDatabase
+    lateinit var repository: WardrobeRepository
 
     override fun onCreate() {
         super.onCreate()
 
 
-        database = databaseBuilder(this, ClothingDatabase::class.java, "clothing_db").build()
-        repository = ClothingRepository(database)
+        database = databaseBuilder(this, WardrobeDatabase::class.java, "clothing_db").build()
+        repository = WardrobeRepository(database)
     }
 }

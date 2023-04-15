@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ClothingViewModel(
-    private val repository: ClothingRepository,
+    private val repository: WardrobeRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -31,7 +31,7 @@ class ClothingViewModel(
         scope.launch {
             try {
                 val clothingsList = withContext(Dispatchers.IO) {
-                    repository.getAllItems()
+                    repository.getAllClothes()
                 }
                 _clothings.value = clothingsList
             } catch (e: Exception) {
