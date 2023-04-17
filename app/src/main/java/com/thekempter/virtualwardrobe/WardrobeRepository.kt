@@ -2,6 +2,7 @@ package com.thekempter.virtualwardrobe
 
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 
 class WardrobeRepository(private val wardrobeDatabase: WardrobeDatabase) : WardrobeRepositoryInterface {
     private val clothingDao = wardrobeDatabase.clothingDao()
@@ -17,6 +18,12 @@ class WardrobeRepository(private val wardrobeDatabase: WardrobeDatabase) : Wardr
     override suspend fun addOutfit(item: Outfit) {
         return withContext(Dispatchers.IO){
             outfitDao.insert(item)
+        }
+    }
+
+    override suspend fun addClothingType(item: ClothingType) {
+        return withContext(Dispatchers.IO){
+            clothingDao.insert(item)
         }
     }
 
@@ -62,10 +69,8 @@ class WardrobeRepository(private val wardrobeDatabase: WardrobeDatabase) : Wardr
         }
     }
 
-    override suspend fun getAllClothingTypes(): List<ClothingType> {
-        return withContext(Dispatchers.IO){
-            clothingDao.getAllTypes()
-        }
+    override fun getAllClothingTypes(): Flow<List<ClothingType>> {
+        return clothingDao.getAllTypes()
     }
 
     override suspend fun getSeasonsByClothingId(item: ClothingItem): List<Season> {
