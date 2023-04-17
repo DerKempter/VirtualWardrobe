@@ -1,28 +1,17 @@
 package com.thekempter.virtualwardrobe
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
+import com.thekempter.virtualwardrobe.data.ClothingImage
 import com.thekempter.virtualwardrobe.data.Season
 import com.thekempter.virtualwardrobe.data.WardrobeRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.internal.wait
 import java.lang.IllegalArgumentException
 
 class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardrobeRepo) :
@@ -53,15 +42,21 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
         repository.addClothingType(clothingType)
     }
 
+    suspend fun addClothingImage(clothingImage: ClothingImage) = repository.addClothingImage(clothingImage)
+
     fun getSeasonsForClothingId(clothingId: Int, callback: (List<Season>) -> Unit) = viewModelScope.launch {
         val result = repository.getSeasonsByClothingId(clothingId)
         callback(result)
     }
 
-//    fun getClothingTypeForClothingId(typeId: Int, callback: (ClothingType) -> Unit) = viewModelScope.launch {
-//        val result = repository.getClothingTypeByClothing(typeId)
-//        callback(result)
-//    }
+    suspend fun getImageForClothingById(imageId: Int) = repository.getImageForClothingById(imageId)
+
+    fun getLatestImage(callback: (List<ClothingImage>) -> Unit) = viewModelScope.launch {
+        val result = repository.getLatestImage()
+        callback(result)
+    }
+
+    suspend fun getLatestImage() = repository.getLatestImage()
 
 }
 

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "020745a1f83f111b0676e676aa9a5c4a",
+    "identityHash": "668e594d2374e88d2610049d4c365be6",
     "entities": [
       {
         "tableName": "clothing_items",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `typeId` INTEGER NOT NULL, `color` TEXT NOT NULL, `brand` TEXT NOT NULL, `size` TEXT NOT NULL, `material` TEXT NOT NULL, `imageUrl` TEXT NOT NULL, FOREIGN KEY(`typeId`) REFERENCES `clothing_types`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `typeId` INTEGER NOT NULL, `color` TEXT NOT NULL, `brand` TEXT NOT NULL, `size` TEXT NOT NULL, `material` TEXT NOT NULL, `imageId` INTEGER NOT NULL, FOREIGN KEY(`typeId`) REFERENCES `clothing_types`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION , FOREIGN KEY(`imageId`) REFERENCES `images`(`id`) ON UPDATE CASCADE ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "id",
@@ -51,9 +51,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "imageUrl",
-            "columnName": "imageUrl",
-            "affinity": "TEXT",
+            "fieldPath": "imageId",
+            "columnName": "imageId",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -67,10 +67,21 @@
         "foreignKeys": [
           {
             "table": "clothing_types",
-            "onDelete": "CASCADE",
+            "onDelete": "NO ACTION",
             "onUpdate": "CASCADE",
             "columns": [
               "typeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "images",
+            "onDelete": "NO ACTION",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "imageId"
             ],
             "referencedColumns": [
               "id"
@@ -248,12 +259,38 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "images",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bitData` BLOB NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bitData",
+            "columnName": "bitData",
+            "affinity": "BLOB",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '020745a1f83f111b0676e676aa9a5c4a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '668e594d2374e88d2610049d4c365be6')"
     ]
   }
 }

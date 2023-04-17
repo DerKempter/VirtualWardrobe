@@ -1,5 +1,6 @@
 package com.thekempter.virtualwardrobe.ui.components.dialog
 
+import android.R
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
@@ -50,6 +51,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
+import coil.size.Scale
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewModelFactory
 import com.thekempter.virtualwardrobe.ClothingViewState
@@ -59,6 +63,7 @@ import com.thekempter.virtualwardrobe.ui.components.DropdownMenuWithOutlinedText
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.net.URLConnection
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -67,12 +72,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun AddClothingItemUi(
     clothingViewModel: ClothingViewModel,
-    onSaveButtonClicked: (ClothingViewModel) -> Unit,
+    onSaveButtonClicked: (ClothingViewModel, Uri) -> Unit,
     addDefaultClothingTypes: (ClothingViewModel) -> Unit,
     state: ClothingViewState,
     name: MutableState<String>,
     color: MutableState<String>,
-    imageUrl: MutableState<String>,
+    imageUrl: MutableState<Uri>,
     brand: MutableState<String>,
     size: MutableState<String>,
     material: MutableState<String>,
@@ -176,7 +181,7 @@ fun AddClothingItemUi(
                     )
                     Button(
                         onClick = {
-                            onSaveButtonClicked(clothingViewModel)
+                            onSaveButtonClicked(clothingViewModel, imageUrl.value)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -238,7 +243,7 @@ fun AddClothingItemUi(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AddClothingItemScreen(
-    onSaveButtonClicked: (ClothingViewModel) -> Unit,
+    onSaveButtonClicked: (ClothingViewModel, Uri) -> Unit,
     addDefaultClothingTypes: (ClothingViewModel) -> Unit,
     name: MutableState<String>,
     type: MutableState<ClothingType>,
@@ -246,7 +251,7 @@ fun AddClothingItemScreen(
     brand: MutableState<String>,
     size: MutableState<String>,
     material: MutableState<String>,
-    imageUrl: MutableState<String>
+    imageUrl: MutableState<Uri>
 ) {
     val clothingViewModel = viewModel(
         ClothingViewModel::class.java,
@@ -266,11 +271,12 @@ fun AddClothingItemScreen(
 
     val launcherGallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()){
             uri ->
-        if(uri.toString() == "null"){
+        if(uri == null){
             imageUrl.value = imageUrl.value
         }
         else{
-            imageUrl.value = uri.toString()
+            imageUrl.value = uri
+            Log.d("AddClothingItemScreen", "picked Uri from photoPicker: $uri")
         }
     }
 
@@ -281,6 +287,7 @@ fun AddClothingItemScreen(
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$currentDateTimeFormatted.jpg")
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
         }
         // Insert a new empty image into the MediaStore
         val contentResolver = context.contentResolver
@@ -290,7 +297,7 @@ fun AddClothingItemScreen(
     val launcherCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             // Update the imageUri with the new picture taken
-            imageUrl.value = imageUri.toString()
+            imageUrl.value = imageUri
         }
     }
     AddClothingItemUi(

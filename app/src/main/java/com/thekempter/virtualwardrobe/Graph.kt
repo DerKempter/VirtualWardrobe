@@ -8,7 +8,12 @@ object Graph {
     lateinit var database: WardrobeDatabase
         private set
     val wardrobeRepo by lazy {
-        WardrobeRepository(database.clothingDao(), database.outfitDao(), database.seasonDao())
+        WardrobeRepository(
+            database.clothingDao(),
+            database.outfitDao(),
+            database.seasonDao(),
+            database.imageDao()
+        )
     }
 
     fun provide(context: Context){

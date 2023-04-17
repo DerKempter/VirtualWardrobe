@@ -12,7 +12,12 @@ import androidx.room.PrimaryKey
             entity = ClothingType::class,
             parentColumns = ["id"],
             childColumns = ["typeId"],
-            onDelete = CASCADE,
+            onUpdate = CASCADE
+        ),
+        ForeignKey(
+            entity = ClothingImage::class,
+            parentColumns = ["id"],
+            childColumns = ["imageId"],
             onUpdate = CASCADE
         )
     ]
@@ -25,5 +30,5 @@ data class ClothingItem(
     val brand: String,
     val size: String,
     val material: String,
-    val imageUrl: String
+    val imageId: Int
 )

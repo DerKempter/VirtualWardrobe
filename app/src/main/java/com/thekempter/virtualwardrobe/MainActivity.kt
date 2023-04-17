@@ -206,12 +206,12 @@ class MainActivity : ComponentActivity() {
                 "NewYorker",
                 "10",
                 "cotton",
-                "null"
+                -1
             )
             val testSeasons = mutableListOf<Season>(Season(0,"Spring"), Season(1,"Summer"), Season(2,"Autumn"))
             val testAllSeasons = mutableListOf<Season>(Season(0,"Spring"), Season(1,"Summer"), Season(2,"Autumn"), Season(3,"Winter"), Season(4,"Halloween"))
             val testClothingType = ClothingType(0, "Jeans")
-            ClothingItemDisplay(clothingItem = testClothingItem, seasons = testSeasons, clothingType = testClothingType)
+            //ClothingItemDisplay(clothingItem = testClothingItem, seasons = testSeasons, clothingType = testClothingType, clothingViewModel)
         }
     }
 }

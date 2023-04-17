@@ -19,7 +19,7 @@ fun CollectionScreen(clothingViewModel: ClothingViewModel){
             val seasons = getSeasonsForClothing(clothingViewModel, clothingItem.id)
             val clothingType = getClothingTypeForClothing(state, clothingItem.typeId)
 
-            ClothingItemDisplay(clothingItem, seasons, clothingType)
+            ClothingItemDisplay(clothingItem, seasons, clothingType, clothingViewModel)
         }
     }
 }
