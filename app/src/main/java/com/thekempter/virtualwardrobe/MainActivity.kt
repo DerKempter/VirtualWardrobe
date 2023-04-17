@@ -50,6 +50,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.Season
+import com.thekempter.virtualwardrobe.ui.components.ClothingItemDisplay
+import com.thekempter.virtualwardrobe.ui.components.collection.CollectionScreen
+import com.thekempter.virtualwardrobe.ui.components.home.HomeScreen
+import com.thekempter.virtualwardrobe.ui.components.outfits.OutfitScreen
+import com.thekempter.virtualwardrobe.ui.components.settings.SettingsScreen
 
 
 class MainActivity : ComponentActivity() {
@@ -58,7 +63,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val clothingViewModel = viewModel(ClothingViewModel::class.java, factory = ClothingViewModelFactory(Graph.wardrobeRepo))
-            val state by clothingViewModel.state.collectAsState()
             val navController = rememberNavController()
             val items = listOf(
                 BottomNavigationItem(
@@ -190,129 +194,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getSeasonsForClothing(clothingViewModel: ClothingViewModel, clothingId: Int): List<Season> {
-        val seasons by mutableStateOf<List<Season>>(emptyList())
-        clothingViewModel.getSeasonsForClothingId(clothingId) {seasonList ->
-            seasons.union(seasonList)
-        }
-        return seasons
-    }
-
-    private fun getClothingTypeForClothing(state: ClothingViewState, typeId: Int): ClothingType {
-        return state.clothingTypes.find { type -> type.id == typeId } ?: ClothingType(
-            -1,
-            "missing Type"
-        )
-    }
-
-    @Composable
-    fun HomeScreen(){
-
-    }
-
-    @Composable
-    fun CollectionScreen(clothingViewModel: ClothingViewModel){
-        val state by clothingViewModel.state.collectAsState()
-        val allClothes = state.clothes
-
-        Column {
-            allClothes.forEach { clothingItem ->
-                val seasons = getSeasonsForClothing(clothingViewModel, clothingItem.id)
-                val clothingType = getClothingTypeForClothing(state, clothingItem.typeId)
-
-                ClothingItemDisplay(clothingItem, seasons, clothingType)
-            }
-        }
-    }
-
-    @Composable
-    fun OutfitScreen(){
-        Column() {
-//        ClothingItemDisplay("Black Sneakers", "Sleek and stylish sneakers")
-        }
-    }
-
-    @Composable
-    fun SettingsScreen(){
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Settings",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingItem(label = "Manage Clothing Types", value = "Add or remove clothing types here")
-        }
-    }
-
-
-    @Composable
-    fun ClothingItemDisplay(clothingItem: ClothingItem, seasons: List<Season>, clothingType: ClothingType) {
-        seasons.map { it.name }.toSet()
-        Surface(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(modifier = Modifier.align(Alignment.CenterHorizontally), text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
-                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.padding(6.dp))
-                    Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.padding(6.dp))
-                    Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
-                }
-                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    Text(text = "Size " + clothingItem.size, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.padding(6.dp))
-                    Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
-                }
-                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    seasons.forEach {season ->
-                        Text(text = season.name, style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.padding(6.dp))
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun ClothingItemDetailView(clothingItem: ClothingItem, seasons: List<Season>, allSeasons: List<Season>, clothingType: ClothingType) {
-        val allSeasonsStrings = allSeasons.map { it.name }
-        var selectedItems = seasons.map { it.name }.toSet()
-        Surface(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
-                Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
-                Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
-                Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
-                Text(text = clothingItem.size, style = MaterialTheme.typography.bodyMedium)
-                Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
-                MultiSelect(
-                    items = allSeasonsStrings,
-                    selectedItems = seasons.map { it.name }.toSet(),
-                    onItemSelected = {
-                            item -> selectedItems = selectedItems.plus(item)
-                    },
-                    onItemDeselected = {
-                            item -> selectedItems = selectedItems.minus(item)
-                    }
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun SettingItem(label: String, value: String) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = label, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text = value)
-        }
-    }
-
     @Preview(showBackground = true)
     @Composable
     fun GreetingPreview() {
@@ -333,41 +214,6 @@ class MainActivity : ComponentActivity() {
             ClothingItemDisplay(clothingItem = testClothingItem, seasons = testSeasons, clothingType = testClothingType)
         }
     }
-
-    @Composable
-    fun MultiSelect(
-        items: List<String>,
-        selectedItems: Set<String>,
-        onItemSelected: (String) -> Unit,
-        onItemDeselected: (String) -> Unit
-    ) {
-        Column {
-            items.forEach { item ->
-                Row(
-                    Modifier.clickable {
-                        if (selectedItems.contains(item)) {
-                            onItemDeselected(item)
-                        } else {
-                            onItemSelected(item)
-                        }
-                    }
-                ) {
-                    Checkbox(
-                        checked = selectedItems.contains(item),
-                        onCheckedChange = {
-                            if (it) {
-                                onItemSelected(item)
-                            } else {
-                                onItemDeselected(item)
-                            }
-                        }
-                    )
-                    Text(text = item)
-                }
-            }
-        }
-    }
-
 }
 
 open class NavigationItem(
