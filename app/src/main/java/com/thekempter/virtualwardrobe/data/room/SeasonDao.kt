@@ -1,15 +1,17 @@
-package com.thekempter.virtualwardrobe
+package com.thekempter.virtualwardrobe.data.room
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.thekempter.virtualwardrobe.data.Season
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SeasonDao {
     @Query("SELECT * FROM seasons")
-    fun getAllSeasons(): List<Season>
+    fun getAllSeasons(): Flow<List<Season>>
 
     @Query("SELECT * FROM seasons WHERE id IN (:seasonIds)")
     fun getSeasonsByIds(seasonIds: List<Int>): List<Season>

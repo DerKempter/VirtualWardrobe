@@ -1,5 +1,9 @@
-package com.thekempter.virtualwardrobe
+package com.thekempter.virtualwardrobe.data
 
+import com.thekempter.virtualwardrobe.data.ClothingItem
+import com.thekempter.virtualwardrobe.data.ClothingType
+import com.thekempter.virtualwardrobe.data.Outfit
+import com.thekempter.virtualwardrobe.data.Season
 import kotlinx.coroutines.flow.Flow
 
 interface WardrobeRepositoryInterface {

@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +30,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,24 +43,22 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.thekempter.virtualwardrobe.data.ClothingItem
+import com.thekempter.virtualwardrobe.data.ClothingType
+import com.thekempter.virtualwardrobe.data.Season
 
 
 class MainActivity : ComponentActivity() {
 
-    private val clothingViewModel: ClothingViewModel
-        get() {
-            val clothingViewModel: ClothingViewModel by viewModels { ClothingViewModel.Factory }
-            return clothingViewModel
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val clothingViewModel = viewModel(ClothingViewModel::class.java, factory = ClothingViewModelFactory(Graph.wardrobeRepo))
+            val state by clothingViewModel.state.collectAsState()
             val navController = rememberNavController()
             val items = listOf(
                 BottomNavigationItem(
@@ -92,14 +92,14 @@ class MainActivity : ComponentActivity() {
                     route = "addNewOutfitItem"
                 )
             )
-            VirtualWardrobe(navController = navController, items = items)
+            VirtualWardrobe(navController = navController, items = items, clothingViewModel)
         }
     }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun VirtualWardrobe(navController: NavHostController, items: List<NavigationItem>){
+    fun VirtualWardrobe(navController: NavHostController, items: List<NavigationItem>, clothingViewModel: ClothingViewModel){
         val backStackEntry = navController.currentBackStackEntryAsState()
         val currentRoute = backStackEntry.value?.destination?.route
         VirtualWardrobeTheme {
@@ -178,7 +178,7 @@ class MainActivity : ComponentActivity() {
                             composable(item.route) {
                                 when(item.route) {
                                     "home" -> HomeScreen()
-                                    "collection" -> CollectionScreen()
+                                    "collection" -> CollectionScreen(clothingViewModel)
                                     "outfits" -> OutfitScreen()
                                     "settings" -> SettingsScreen()
                                 }
@@ -190,20 +190,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun getAllClothings(): LiveData<List<ClothingItem>> {
-        return clothingViewModel.clothings
+    private fun getSeasonsForClothing(clothingViewModel: ClothingViewModel, clothingId: Int): List<Season> {
+        val seasons by mutableStateOf<List<Season>>(emptyList())
+        clothingViewModel.getSeasonsForClothingId(clothingId) {seasonList ->
+            seasons.union(seasonList)
+        }
+        return seasons
     }
 
-    fun getSeasonsForClothing(item: ClothingItem): LiveData<List<Season>> {
-        return clothingViewModel.getSeasonsForClothingId(item)
-    }
-
-    fun getClothingTypeForClothing(item: ClothingItem): LiveData<ClothingType> {
-        return clothingViewModel.getClothingTypeForClothingId(item)
-    }
-
-    fun getAllSeasons(): LiveData<List<Season>> {
-        return clothingViewModel.getAllSeasons()
+    private fun getClothingTypeForClothing(state: ClothingViewState, typeId: Int): ClothingType {
+        return state.clothingTypes.find { type -> type.id == typeId } ?: ClothingType(
+            -1,
+            "missing Type"
+        )
     }
 
     @Composable
@@ -212,21 +211,16 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun CollectionScreen(){
-        val clothingsLiveData = getAllClothings()
+    fun CollectionScreen(clothingViewModel: ClothingViewModel){
+        val state by clothingViewModel.state.collectAsState()
+        val allClothes = state.clothes
 
-        Column() {
-            val clothings = clothingsLiveData.value ?: emptyList()
-            clothings.forEach { clothingItem ->
-                val seasons = getSeasonsForClothing(clothingItem)
-                val allSeasons = getAllSeasons()
-                val clothingType = getClothingTypeForClothing(clothingItem)
+        Column {
+            allClothes.forEach { clothingItem ->
+                val seasons = getSeasonsForClothing(clothingViewModel, clothingItem.id)
+                val clothingType = getClothingTypeForClothing(state, clothingItem.typeId)
 
-                if (seasons.value != null || clothingType.value != null){
-                    val seasonsVal = seasons.value!!
-                    val clothingTypeVal = clothingType.value!!
-                    ClothingItemDisplay(clothingItem, seasonsVal, clothingTypeVal)
-                }
+                ClothingItemDisplay(clothingItem, seasons, clothingType)
             }
         }
     }

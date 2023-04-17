@@ -6,6 +6,8 @@ import android.content.ContentValues
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -24,38 +26,49 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.thekempter.virtualwardrobe.data.ClothingItem
+import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class AddClothingItemActivity : ComponentActivity() {
-
-    private val clothingViewModel: ClothingViewModel
-        get() {
-            val clothingViewModel: ClothingViewModel by viewModels { ClothingViewModel.Factory }
-            return clothingViewModel
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,12 +97,21 @@ class AddClothingItemActivity : ComponentActivity() {
         material: MutableState<String>,
         imageUrl: MutableState<String>,
         ) {
+        val clothingViewModel = viewModel(
+            ClothingViewModel::class.java,
+            factory = ClothingViewModelFactory(Graph.wardrobeRepo)
+        )
+        val state by clothingViewModel.state.collectAsState()
         val scrollState = rememberScrollState()
         val context = LocalContext.current
-        val allTypes = clothingViewModel.getAllTypes()
-        if (allTypes.value != null){
-            type.value = allTypes.value!!.first()
+        Log.d("AddClothingActivity", "value of allTypes: ${state.clothingTypes}")
+
+        try {
+            type.value = state.clothingTypes.first()
+        } catch (e: NoSuchElementException){
+            type.value = ClothingType(-1, "")
         }
+
 
         val launcherGallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()){
                 uri ->
@@ -123,10 +145,6 @@ class AddClothingItemActivity : ComponentActivity() {
 
 
         VirtualWardrobeTheme{
-            var allClothingTypes = emptyList<ClothingType>()
-            if (allTypes.value != null){
-                allClothingTypes = allTypes.value!!
-            }
             Scaffold(
                 content = {
                     Box(
@@ -186,16 +204,39 @@ class AddClothingItemActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(16.dp))
                             var expanded by remember { mutableStateOf(false) }
                             var selectedOption by remember { mutableStateOf(type.value) }
-                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                allClothingTypes.forEach {type ->
+                            OutlinedTextField(
+                                value = selectedOption.name,
+                                label = { Text(text = "Type") },
+                                onValueChange = {},
+                                modifier = Modifier
+                                    .clickable(
+                                        onClick = {
+                                            expanded = !expanded
+                                        }
+                                    )
+                                    .fillMaxSize(),
+                                enabled = false,
+                                colors = TextFieldDefaults.outlinedTextFieldColors(
+                                    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = !expanded },
+                                properties = PopupProperties(focusable = true),
+                            ) {
+                                state.clothingTypes.forEach { type ->
                                     DropdownMenuItem(
                                         onClick = {
                                             selectedOption = type
-                                            expanded = false
+                                            expanded = !expanded
                                         },
                                         text = { Text(text = type.name) }
                                     )
                                 }
+
                             }
                             Spacer(modifier = Modifier.height(16.dp))
                             OutlinedTextField(
@@ -231,8 +272,7 @@ class AddClothingItemActivity : ComponentActivity() {
                         )
                         Button(
                             onClick = {
-                                // Save the data and go back to previous screen
-                                //onBackPressed()
+                                onSaveButtonClicked(clothingViewModel)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -243,10 +283,65 @@ class AddClothingItemActivity : ComponentActivity() {
                     }
                 }
             )
+            Log.d("virtualWardrobe", state.clothingTypes.toString())
+            val coroutineScope = rememberCoroutineScope()
+            val dialogState = remember { mutableStateOf(false) }
+            if(!dialogState.value){
+                LaunchedEffect(Unit) {
+                    coroutineScope.launch {
+                        delay(1000)
+                        dialogState.value = true
+                    }
+                }
+            }
+            if (state.clothingTypes.isEmpty()) {
+                if (dialogState.value) {
+                    AlertDialog(
+                        onDismissRequest = { },
+                        title = { Text(text = "No Types found") },
+                        text = { Text(text = "Do you want to add a few default Clothing Types automatically?") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    addDefaultClothingTypes(clothingViewModel)
+                                    dialogState.value = false
+                                },
+                                content = { Text(text = "Confirm") }
+                            )
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    dialogState.value = false
+                                    Toast.makeText(
+                                        context,
+                                        "Add your custom Types from the settings",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                },
+                                content = { Text(text = "Cancel") }
+                            )
+                        },
+                        shape = RoundedCornerShape(22.dp),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        textContentColor = contentColorFor(backgroundColor = MaterialTheme.colorScheme.background)
+                    )
+                }
+            }
         }
     }
 
-    fun onSaveButtonClicked() {
+    private fun addDefaultClothingTypes(viewModel: ClothingViewModel){
+        val clothingTypeNames = arrayOf(
+            "Pullover", "Skirt", "Dress", "Pants", "Shorts", "Jumpsuit",
+            "Jacket", "Shoes", "Jewelery", "Belt", "Shirt", "Hoodie", "Crop-Top"
+        )
+        clothingTypeNames.forEach { clothingTypeName ->
+            viewModel.addClothingType(ClothingType(name = clothingTypeName))
+        }
+    }
+
+    fun onSaveButtonClicked(clothingViewModel: ClothingViewModel) {
         val clothingType = type.value
         val clothingItem = ClothingItem(
             name = name.value,
@@ -257,6 +352,8 @@ class AddClothingItemActivity : ComponentActivity() {
             imageUrl = imageUrl.value,
             typeId = clothingType.id
         )
+        clothingViewModel.addClothingItem(clothingItem)
+        finish()
     }
 
     @Preview(showBackground = true)

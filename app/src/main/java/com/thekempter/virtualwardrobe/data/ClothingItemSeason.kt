@@ -1,4 +1,4 @@
-package com.thekempter.virtualwardrobe
+package com.thekempter.virtualwardrobe.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

@@ -1,4 +1,4 @@
-package com.thekempter.virtualwardrobe
+package com.thekempter.virtualwardrobe.data.room
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,6 +6,10 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.thekempter.virtualwardrobe.data.ClothingItem
+import com.thekempter.virtualwardrobe.data.ClothingItemSeasonCrossRef
+import com.thekempter.virtualwardrobe.data.ClothingType
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ClothingDao {
@@ -19,7 +23,10 @@ interface ClothingDao {
     fun delete(item: ClothingItem)
 
     @Query("SELECT * FROM clothing_items")
-    fun getAllClothes(): List<ClothingItem>
+    fun getAllClothes(): Flow<List<ClothingItem>>
+
+    @Query("SELECT * FROM clothing_types")
+    fun getAllTypes(): Flow<List<ClothingType>>
 
     @Query("SELECT * FROM clothing_items WHERE typeId = :type")
     fun getItemsByType(type: String): List<ClothingItem>
@@ -34,11 +41,8 @@ interface ClothingDao {
     fun deleteClothingSeasonJunction(junction: ClothingItemSeasonCrossRef)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(type: ClothingType)
+    fun insert(type: ClothingType)
 
     @Query("SELECT * FROM clothing_types WHERE Id = :clothingTypeId")
     fun getTypeForClothing(clothingTypeId: Int): ClothingType
-
-    @Query("SELECT * FROM clothing_types ORDER BY name")
-    fun getAllTypes(): List<ClothingType>
 }

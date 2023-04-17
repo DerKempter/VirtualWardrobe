@@ -7,90 +7,76 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.thekempter.virtualwardrobe.data.ClothingItem
+import com.thekempter.virtualwardrobe.data.ClothingType
+import com.thekempter.virtualwardrobe.data.Season
+import com.thekempter.virtualwardrobe.data.WardrobeRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.internal.wait
+import java.lang.IllegalArgumentException
 
-class ClothingViewModel(
-    private val repository: WardrobeRepository,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    private val scope = CoroutineScope(Dispatchers.Main)
+class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardrobeRepo) :
+    ViewModel() {
 
-    private val _clothings = MutableLiveData<List<ClothingItem>>()
-    val clothings: LiveData<List<ClothingItem>>
-        get() = _clothings
+    private val _state = MutableStateFlow(ClothingViewState())
+    val state: StateFlow<ClothingViewState>
+        get() = _state
+
+    val clothes = repository.allClothes
+    val clothingTypes = repository.allTypes
 
     init {
-        loadClothings()
-    }
-
-    private fun loadClothings() {
-        scope.launch {
-            try {
-                val clothingsList = withContext(Dispatchers.IO) {
-                    repository.getAllClothes()
-                }
-                _clothings.value = clothingsList
-            } catch (e: Exception) {
-                // Handle the exception
+        viewModelScope.launch {
+            combine(clothes, clothingTypes) { clothes: List<ClothingItem>, clothingTypes: List<ClothingType> ->
+                ClothingViewState(clothes, clothingTypes)
+            }.collect {
+                _state.value = it
             }
         }
     }
 
-    fun getSeasonsForClothingId(clothingItem: ClothingItem): MutableLiveData<List<Season>> {
-        val seasonsLiveData = MutableLiveData<List<Season>>()
-        scope.launch {
-            val seasons = repository.getSeasonsByClothingId(clothingItem)
-            seasonsLiveData.postValue(seasons)
-        }
-        return seasonsLiveData
+    fun addClothingItem(clothingItem: ClothingItem) = viewModelScope.launch {
+        repository.addClothing(clothingItem)
     }
 
-    fun getAllSeasons(): MutableLiveData<List<Season>> {
-        val seasonsLiveData = MutableLiveData<List<Season>>()
-        scope.launch {
-            val seasons = repository.getAllSeasons()
-            seasonsLiveData.postValue(seasons)
-        }
-        return seasonsLiveData
+    fun addClothingType(clothingType: ClothingType) = viewModelScope.launch {
+        repository.addClothingType(clothingType)
     }
 
-    fun getAllTypes(): MutableLiveData<List<ClothingType>> {
-        val clothingTypesLiveData = MutableLiveData<List<ClothingType>>()
-        scope.launch {
-            val clothingTypes = repository.getAllClothingTypes()
-            clothingTypesLiveData.postValue(clothingTypes)
-        }
-        return clothingTypesLiveData
+    fun getSeasonsForClothingId(clothingId: Int, callback: (List<Season>) -> Unit) = viewModelScope.launch {
+        val result = repository.getSeasonsByClothingId(clothingId)
+        callback(result)
     }
 
-    fun getClothingTypeForClothingId(clothingItem: ClothingItem): MutableLiveData<ClothingType> {
-        val clothingTypeLiveData = MutableLiveData<ClothingType>()
-        scope.launch {
-            val clothingType = repository.getClothingTypeByClothing(clothingItem)
-            clothingTypeLiveData.postValue(clothingType)
-        }
-        return clothingTypeLiveData
-    }
+//    fun getClothingTypeForClothingId(typeId: Int, callback: (ClothingType) -> Unit) = viewModelScope.launch {
+//        val result = repository.getClothingTypeByClothing(typeId)
+//        callback(result)
+//    }
 
-    companion object {
-        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: Class<T>,
-                extras: CreationExtras
-            ): T {
-                val application = checkNotNull(extras[APPLICATION_KEY])
-                val savedStateHandle = extras.createSavedStateHandle()
+}
 
-                return ClothingViewModel(
-                    (application as VirtualWardrobeApplication).repository,
-                    savedStateHandle
-                ) as T
-            }
+@Suppress("UNCHECKED_CAST")
+class ClothingViewModelFactory(private val repository: WardrobeRepository): ViewModelProvider.Factory{
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ClothingViewModel::class.java)){
+            return ClothingViewModel(repository) as T
+        } else {
+            throw IllegalArgumentException("Unknown view model class")
         }
     }
 }
+
+data class ClothingViewState(
+    val clothes: List<ClothingItem> = emptyList(),
+    val clothingTypes: List<ClothingType> = emptyList()
+)
