@@ -77,12 +77,12 @@ fun ClothingItemDisplay(clothingItem: ClothingItem, seasons: List<Season>, cloth
         }
         Log.d("ClothingItemDisplay", "imageUrl = ${clothingItem.imageId}")
         val clothingImageList = getImageForClothingById(clothingViewModel, clothingItem.imageId)
-        //Log.d("ClothingItemDisplay", "imageList = $clothingImageList")
+//        Log.d("ClothingItemDisplay", "imageList = $clothingImageList")
         if(clothingImageList.value.size == 1){
-            Log.d("ClothingItemDisplay","rendering image now")
-            Log.d("ClothingItemDisplay", "imageList = ${clothingImageList.value.first().bitData.size}")
+//            Log.d("ClothingItemDisplay","rendering image now")
+//            Log.d("ClothingItemDisplay", "imageList = ${clothingImageList.value.first().bitData.size}")
             val bitmap = ClothingImageTypeConverter().fromByteArray(clothingImageList.value.first().bitData)
-            Log.d("ClothingItemDisplay", "bitmap: ${bitmap.toString()}")
+//            Log.d("ClothingItemDisplay", "bitmap: ${bitmap.toString()}")
             LoadImageFromUriWithCoil(image = bitmap)
         }
     }

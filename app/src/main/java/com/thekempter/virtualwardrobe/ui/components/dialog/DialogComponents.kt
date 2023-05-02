@@ -1,16 +1,21 @@
 package com.thekempter.virtualwardrobe.ui.components.dialog
 
-import android.R
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -51,9 +56,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
-import coil.request.ImageRequest
-import coil.size.Scale
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewModelFactory
 import com.thekempter.virtualwardrobe.ClothingViewState
@@ -63,7 +65,6 @@ import com.thekempter.virtualwardrobe.ui.components.DropdownMenuWithOutlinedText
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.net.URLConnection
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -86,7 +87,10 @@ fun AddClothingItemUi(
     context: Context,
     launcherGallery: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
     launcherCamera: ManagedActivityResultLauncher<Uri, Boolean>,
-    imageUri: Uri
+    imageUri: Uri,
+    imageBitmap: MutableState<Bitmap>,
+    permissionLauncher: ActivityResultLauncher<String>,
+    permissionGranted: MutableState<Boolean>
     ){
     VirtualWardrobeTheme{
         Scaffold(
@@ -96,39 +100,15 @@ fun AddClothingItemUi(
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(model = imageUrl.value),
-                        contentDescription = name.value,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter)
-                            .height((400 - scrollState.value).coerceAtLeast(150).dp)
-                            .clip(shape = RoundedCornerShape(8.dp))
-                            .clickable {
-                                val options =
-                                    arrayOf("Take Photo", "Choose from Gallery", "Cancel")
-                                val builder = AlertDialog.Builder(context)
-                                builder.setTitle("Select an Option")
-                                builder.setItems(options) { dialog, which ->
-                                    when (which) {
-                                        0 -> {
-                                            launcherCamera.launch(imageUri)
-                                        }
-
-                                        1 -> {
-                                            launcherGallery.launch(
-                                                PickVisualMediaRequest(
-                                                    mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                )
-                                            )
-                                        }
-
-                                        else -> dialog.dismiss()
-                                    }
-                                }
-                                builder.show()
-                            },
-                        contentScale = ContentScale.Crop
+                    ImageBuilderWithPermission(imageBitmap,
+                        name,
+                        imageUri,
+                        launcherGallery,
+                        launcherCamera,
+                        scrollState,
+                        context,
+                        permissionLauncher,
+                        permissionGranted
                     )
                     Column(
                         modifier = Modifier
@@ -251,7 +231,10 @@ fun AddClothingItemScreen(
     brand: MutableState<String>,
     size: MutableState<String>,
     material: MutableState<String>,
-    imageUrl: MutableState<Uri>
+    imageUrl: MutableState<Uri>,
+    imageBitmap: MutableState<Bitmap>,
+    permissionLauncher: ActivityResultLauncher<String>,
+    permissionGranted: MutableState<Boolean>
 ) {
     val clothingViewModel = viewModel(
         ClothingViewModel::class.java,
@@ -277,6 +260,12 @@ fun AddClothingItemScreen(
         else{
             imageUrl.value = uri
             Log.d("AddClothingItemScreen", "picked Uri from photoPicker: $uri")
+
+            // Get the Bitmap from the Uri
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            val bitmap = ImageDecoder.decodeBitmap(source)
+
+            imageBitmap.value = bitmap
         }
     }
 
@@ -285,21 +274,31 @@ fun AddClothingItemScreen(
         val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
         val currentDateTimeFormatted = currentDateTime.format(formatter)
         val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "$currentDateTimeFormatted.jpg")
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.IS_PENDING, 1)
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$currentDateTimeFormatted.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         }
         // Insert a new empty image into the MediaStore
         val contentResolver = context.contentResolver
         contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)!!
-        // TODO make it so image is not saved in gallery aka find a way for the picture to not appear in gallery
     }
+
     val launcherCamera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        Log.d("launcherCamera", "success = $success")
         if (success) {
-            // Update the imageUri with the new picture taken
+            // Get the Bitmap from the imageUri
+            val source = ImageDecoder.createSource(context.contentResolver, imageUri)
+            val bitmap = ImageDecoder.decodeBitmap(source)
+
+            imageBitmap.value = bitmap
+            Log.d("launcherCamera", "bitmap length = ${bitmap.byteCount}")
+            Log.d("launcherCamera", "imageBitmap length = ${imageBitmap.value.byteCount}")
+
+            // Delete the image if it was taken with the camera
             imageUrl.value = imageUri
+            context.contentResolver.delete(imageUri, null, null)
         }
     }
+
     AddClothingItemUi(
         clothingViewModel,
         onSaveButtonClicked,
@@ -316,6 +315,101 @@ fun AddClothingItemScreen(
         context,
         launcherGallery,
         launcherCamera,
-        imageUri
+        imageUri,
+        imageBitmap,
+        permissionLauncher,
+        permissionGranted
     )
+}
+
+@Composable
+fun ImageBuilderWithPermission(
+    imageBitmap: MutableState<Bitmap>,
+    name: MutableState<String>,
+    imageUri: Uri,
+    launcherGallery: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
+    launcherCamera: ManagedActivityResultLauncher<Uri, Boolean>,
+    scrollState: ScrollState,
+    context: Context,
+    permissionLauncher: ActivityResultLauncher<String>,
+    permissionGranted: MutableState<Boolean>
+){
+    when (PackageManager.PERMISSION_GRANTED) {
+        context.checkSelfPermission(
+            Manifest.permission.CAMERA
+        ) -> {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageBitmap.value),
+                contentDescription = name.value,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height((400 - scrollState.value).coerceAtLeast(150).dp)
+                    .clip(shape = RoundedCornerShape(8.dp))
+                    .clickable {
+                        val options =
+                            arrayOf("Take Photo", "Choose from Gallery", "Cancel")
+                        val builder = AlertDialog.Builder(context)
+                        builder.setTitle("Select an Option")
+                        builder.setItems(options) { dialog, which ->
+                            when (which) {
+                                0 -> {
+                                    launcherCamera.launch(imageUri)
+                                }
+
+                                1 -> {
+                                    launcherGallery.launch(
+                                        PickVisualMediaRequest(
+                                            mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                                        )
+                                    )
+                                }
+
+                                else -> dialog.dismiss()
+                            }
+                        }
+                        builder.show()
+                    },
+                contentScale = ContentScale.Crop
+            )
+        }
+        else -> {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+            if (permissionGranted.value) {
+                Image(
+                    painter = rememberAsyncImagePainter(model = imageBitmap.value),
+                    contentDescription = name.value,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height((400 - scrollState.value).coerceAtLeast(150).dp)
+                        .clip(shape = RoundedCornerShape(8.dp))
+                        .clickable {
+                            val options =
+                                arrayOf("Take Photo", "Choose from Gallery", "Cancel")
+                            val builder = AlertDialog.Builder(context)
+                            builder.setTitle("Select an Option")
+                            builder.setItems(options) { dialog, which ->
+                                when (which) {
+                                    0 -> {
+                                        launcherCamera.launch(imageUri)
+                                    }
+
+                                    1 -> {
+                                        launcherGallery.launch(
+                                            PickVisualMediaRequest(
+                                                mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                                            )
+                                        )
+                                    }
+
+                                    else -> dialog.dismiss()
+                                }
+                            }
+                            builder.show()
+                        },
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+
 }

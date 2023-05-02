@@ -8,10 +8,13 @@ import android.util.Base64
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewModelScope
 import com.thekempter.virtualwardrobe.data.ClothingImage
 import com.thekempter.virtualwardrobe.data.ClothingImageTypeConverter
@@ -41,10 +44,24 @@ class AddClothingItemActivity : ComponentActivity() {
                 brand,
                 size,
                 material,
-                imageUrl
+                imageUrl,
+                imageBitmap,
+                requestPermissionLauncher,
+                permissionGranted
             )
         }
     }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted){
+                Log.d("AddClothingItemActivity", "Camera Permission granted")
+            } else {
+                Log.d("AddClothingItemActivity", "Camera Permission denied")
+            }
+            permissionGranted.value = isGranted
+        }
 
     var name = mutableStateOf("")
     var type = mutableStateOf(ClothingType(-1, "dummy"))
@@ -53,6 +70,8 @@ class AddClothingItemActivity : ComponentActivity() {
     var size = mutableStateOf("")
     var material = mutableStateOf("")
     var imageUrl = mutableStateOf(Uri.parse(""))
+    var imageBitmap = mutableStateOf(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888))
+    var permissionGranted = mutableStateOf(false)
 
 
 
@@ -66,9 +85,9 @@ class AddClothingItemActivity : ComponentActivity() {
         }
     }
 
-    fun onSaveButtonClicked(clothingViewModel: ClothingViewModel, imageUri: Uri) {
+    private fun onSaveButtonClicked(clothingViewModel: ClothingViewModel, imageUri: Uri) {
         clothingViewModel.viewModelScope.launch {
-            val clothingImageList = saveImageToDatabase(clothingViewModel, imageUri)
+            val clothingImageList = saveImageToDatabase(clothingViewModel)
             val clothingImage = clothingImageList.first()
             if (clothingImage.id == -1){
                 // TODO popup alert
@@ -90,31 +109,27 @@ class AddClothingItemActivity : ComponentActivity() {
         }
     }
 
-    private suspend fun saveImageToDatabase(clothingViewModel: ClothingViewModel, uri: Uri): List<ClothingImage> {
-            val inputStream: InputStream? = uri.let { contentResolver.openInputStream(it) }
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            val maxSizeBytes = 500000
-            if (bitmap != null) {
-                val sizeBytes = bitmap.byteCount
-                var compressionRatio = 1F
-                if (sizeBytes > maxSizeBytes){
-                    Log.d(
-                        "AddClothingItemActivity",
-                        "Bytecount before compression: ${sizeBytes} bytes"
-                    )
-                    compressionRatio = maxSizeBytes.toFloat() / sizeBytes.toFloat()
-                }
-                val byteArray = ClothingImageTypeConverter().toByteArray(bitmap, compressionRatio)
-                val clothingImageToSave = ClothingImage(bitData = byteArray)
-                clothingViewModel.addClothingImage(clothingImageToSave)
-                val clothingImage = clothingViewModel.getLatestImage()
-                Log.d(
-                    "AddClothingItemActivity",
-                    "saved bitmap to database: ${byteArray.size} bytes"
-                )
-                return clothingImage
-            }
-            return List(1) { ClothingImage(id = -1, bitData = ByteArray(1)) }
+    private suspend fun saveImageToDatabase(clothingViewModel: ClothingViewModel): List<ClothingImage> {
+        val bitmap = imageBitmap.value
+        val maxSizeBytes = 5000000
+        val sizeBytes = bitmap.byteCount
+        var compressionRatio = 1F
+        if (sizeBytes > maxSizeBytes){
+            Log.d(
+                "AddClothingItemActivity",
+                "Bytecount before compression: $sizeBytes bytes"
+            )
+            compressionRatio = maxSizeBytes.toFloat() / sizeBytes.toFloat()
+        }
+        val byteArray = ClothingImageTypeConverter().toByteArray(bitmap, compressionRatio)
+        val clothingImageToSave = ClothingImage(bitData = byteArray)
+        clothingViewModel.addClothingImage(clothingImageToSave)
+        val clothingImage = clothingViewModel.getLatestImage()
+        Log.d(
+            "AddClothingItemActivity",
+            "saved bitmap to database: ${byteArray.size} bytes"
+        )
+        return clothingImage
     }
 
     @Preview(showBackground = true)
