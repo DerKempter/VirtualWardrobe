@@ -33,7 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.Season
-import com.thekempter.virtualwardrobe.ui.components.ClothingItemDisplay
+import com.thekempter.virtualwardrobe.ui.components.ClothingItemDetailView
 import com.thekempter.virtualwardrobe.ui.components.collection.CollectionScreen
 import com.thekempter.virtualwardrobe.ui.components.home.HomeScreen
 import com.thekempter.virtualwardrobe.ui.components.outfits.OutfitScreen
@@ -101,7 +101,10 @@ class MainActivity : ComponentActivity() {
 
                                 NavigationBarItem(
                                     selected = selected,
-                                    onClick = { navController.navigate(item.route) },
+                                    onClick = { navController.navigate(item.route) {
+                                        launchSingleTop = true
+                                        popUpTo(items.first { it.name == "Home" }.route)
+                                    } },
                                     label = {
                                         Text(
                                             text = item.name,
@@ -165,9 +168,21 @@ class MainActivity : ComponentActivity() {
                             composable(item.route) {
                                 when(item.route) {
                                     "home" -> HomeScreen()
-                                    "collection" -> CollectionScreen(clothingViewModel)
+                                    "collection" -> CollectionScreen(clothingViewModel, navController)
                                     "outfits" -> OutfitScreen()
                                     "settings" -> SettingsScreen()
+                                }
+                            }
+                        }
+                        composable("itemDetail/{item}") { backStackEntry ->
+                            val itemId = backStackEntry.arguments?.getString("item")
+                            itemId?.let {
+                                val item: ClothingItem = clothingViewModel.currentClothingItem
+                                if (item.id.toString() == itemId){
+                                    ClothingItemDetailView(
+                                        clothingItem = item,
+                                        clothingViewModel = clothingViewModel
+                                    )
                                 }
                             }
                         }
