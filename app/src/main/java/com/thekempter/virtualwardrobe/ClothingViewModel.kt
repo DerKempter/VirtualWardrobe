@@ -23,6 +23,7 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
 
     val clothes = repository.allClothes
     val clothingTypes = repository.allTypes
+    var currentClothingItem: ClothingItem = ClothingItem(id = -1, name = "", typeId = -1, color = "", brand = "", size = "", material = "", imageId = -1)
 
     init {
         viewModelScope.launch {
