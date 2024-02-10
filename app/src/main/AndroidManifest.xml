@@ -6,6 +6,7 @@
         android:name="android.hardware.camera"
         android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".VirtualWardrobeApplication"
@@ -18,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VirtualWardrobe"
         android:enableOnBackInvokedCallback="true"
-        tools:targetApi="31">
+        tools:targetApi="tiramisu">
         <activity
             android:name=".AddOutfitActivity"
             android:exported="false"
@@ -35,7 +36,6 @@
             android:theme="@style/Theme.VirtualWardrobe">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
