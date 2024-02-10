@@ -71,9 +71,7 @@ class AddClothingItemActivity : ComponentActivity() {
     var material = mutableStateOf("")
     var imageUrl = mutableStateOf(Uri.parse(""))
     var imageBitmap = mutableStateOf(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888))
-    var permissionGranted = mutableStateOf(false)
-
-
+    private var permissionGranted = mutableStateOf(false)
 
     private fun addDefaultClothingTypes(viewModel: ClothingViewModel){
         val clothingTypeNames = arrayOf(
@@ -85,7 +83,7 @@ class AddClothingItemActivity : ComponentActivity() {
         }
     }
 
-    private fun onSaveButtonClicked(clothingViewModel: ClothingViewModel, imageUri: Uri) {
+    private fun onSaveButtonClicked(clothingViewModel: ClothingViewModel) {
         clothingViewModel.viewModelScope.launch {
             val clothingImageList = saveImageToDatabase(clothingViewModel)
             val clothingImage = clothingImageList.first()
