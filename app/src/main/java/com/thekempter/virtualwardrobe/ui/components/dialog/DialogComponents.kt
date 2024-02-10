@@ -21,8 +21,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,12 +75,11 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun AddClothingItemUi(
     clothingViewModel: ClothingViewModel,
-    onSaveButtonClicked: (ClothingViewModel, Uri) -> Unit,
+    onSaveButtonClicked: (ClothingViewModel) -> Unit,
     addDefaultClothingTypes: (ClothingViewModel) -> Unit,
     state: ClothingViewState,
     name: MutableState<String>,
     color: MutableState<String>,
-    imageUrl: MutableState<Uri>,
     brand: MutableState<String>,
     size: MutableState<String>,
     material: MutableState<String>,
@@ -97,8 +98,6 @@ fun AddClothingItemUi(
             content = {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
                 ) {
                     ImageBuilderWithPermission(imageBitmap,
                         name,
@@ -159,13 +158,24 @@ fun AddClothingItemUi(
                     Spacer(
                         modifier = Modifier.height(32.dp)
                     )
+                }
+            },
+            bottomBar = {
+                Row(modifier = Modifier.fillMaxWidth().padding(16.dp),horizontalArrangement = Arrangement.SpaceBetween) {
+                    Button(
+                        onClick = {  },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    ) {
+                        Text("Cancel")
+                    }
                     Button(
                         onClick = {
-                            onSaveButtonClicked(clothingViewModel, imageUrl.value)
+                            onSaveButtonClicked(clothingViewModel)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
+                            .padding(start = 8.dp)
                     ) {
                         Text("Save")
                     }
@@ -223,7 +233,7 @@ fun AddClothingItemUi(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AddClothingItemScreen(
-    onSaveButtonClicked: (ClothingViewModel, Uri) -> Unit,
+    onSaveButtonClicked: (ClothingViewModel) -> Unit,
     addDefaultClothingTypes: (ClothingViewModel) -> Unit,
     name: MutableState<String>,
     type: MutableState<ClothingType>,
@@ -306,7 +316,6 @@ fun AddClothingItemScreen(
         state,
         name,
         color,
-        imageUrl,
         brand,
         size,
         material,
