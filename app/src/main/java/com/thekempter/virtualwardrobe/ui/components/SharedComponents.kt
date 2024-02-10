@@ -1,9 +1,7 @@
 package com.thekempter.virtualwardrobe.ui.components
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -30,22 +29,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import coil.compose.rememberAsyncImagePainter
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewState
-import com.thekempter.virtualwardrobe.data.ClothingImageTypeConverter
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.Season
 import com.thekempter.virtualwardrobe.data.util.getImageForClothingById
+import kotlin.math.max
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClothingItemDisplay(clothingItem: ClothingItem, seasons: List<Season>, clothingType: ClothingType, clothingViewModel: ClothingViewModel) {
-    seasons.map { it.name }.toSet()
+fun ClothingItemDisplay(
+    clothingItem: ClothingItem,
+    seasons: List<Season>,
+    clothingType: ClothingType,
+    clothingViewModel: ClothingViewModel,
+    navController: NavController
+) {
+    seasons.map { it.name }.distinct()
     Box(modifier = Modifier.fillMaxWidth()){
-        Surface(modifier = Modifier.fillMaxWidth()) {
+        Surface(modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                clothingViewModel.currentClothingItem = clothingItem
+                navController.navigate("itemDetail/${clothingItem.id}")
+            }
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -77,41 +93,43 @@ fun ClothingItemDisplay(clothingItem: ClothingItem, seasons: List<Season>, cloth
         }
         Log.d("ClothingItemDisplay", "imageUrl = ${clothingItem.imageId}")
         val clothingImageList = getImageForClothingById(clothingViewModel, clothingItem.imageId)
-//        Log.d("ClothingItemDisplay", "imageList = $clothingImageList")
         if(clothingImageList.value.size == 1){
-//            Log.d("ClothingItemDisplay","rendering image now")
-//            Log.d("ClothingItemDisplay", "imageList = ${clothingImageList.value.first().bitData.size}")
-            val bitmap = ClothingImageTypeConverter().fromByteArray(clothingImageList.value.first().bitData)
-//            Log.d("ClothingItemDisplay", "bitmap: ${bitmap.toString()}")
-            LoadImageFromUriWithCoil(image = bitmap)
+            LoadImageFromUriWithCoil(imageData = clothingImageList.value.first().bitData)
         }
     }
 }
 
 @Composable
-fun ClothingItemDetailView(clothingItem: ClothingItem, seasons: List<Season>, allSeasons: List<Season>, clothingType: ClothingType) {
-    val allSeasonsStrings = allSeasons.map { it.name }
-    var selectedItems = seasons.map { it.name }.toSet()
+fun ClothingItemDetailView(clothingItem: ClothingItem, clothingViewModel: ClothingViewModel) {
+    //val allSeasonsStrings = allSeasons.map { it.name }
+    // var selectedItems = seasons.map { it.name }.toSet()
     Surface(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
+            val clothingImageList = getImageForClothingById(clothingViewModel = clothingViewModel, clothingId = clothingItem.id)
+            if(clothingImageList.value.size == 1){
+                Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    LoadImageFromUriWithCoil(imageData = clothingImageList.value.first().bitData, 800)
+                }
+            }
             Text(text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
             Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
             Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
             Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
             Text(text = clothingItem.size, style = MaterialTheme.typography.bodyMedium)
-            Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
-            MultiSelect(
-                items = allSeasonsStrings,
-                selectedItems = seasons.map { it.name }.toSet(),
-                onItemSelected = {
-                        item -> selectedItems = selectedItems.plus(item)
-                },
-                onItemDeselected = {
-                        item -> selectedItems = selectedItems.minus(item)
-                }
-            )
+            //Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
+//            MultiSelect(
+//                items = allSeasonsStrings,
+//                selectedItems = seasons.map { it.name }.toSet(),
+//                onItemSelected = {
+//                        item -> selectedItems = selectedItems.plus(item)
+//                },
+//                onItemDeselected = {
+//                        item -> selectedItems = selectedItems.minus(item)
+//                }
+//            )
         }
     }
+
 }
 
 @Composable
@@ -172,6 +190,8 @@ fun DropdownMenuWithOutlinedTextFieldBase(state: ClothingViewState, type: Mutabl
         )
     )
     DropdownMenu(
+        modifier = Modifier.fillMaxWidth()
+            .height(200.dp),
         expanded = expanded,
         onDismissRequest = { expanded = !expanded },
         properties = PopupProperties(focusable = true),
@@ -190,11 +210,26 @@ fun DropdownMenuWithOutlinedTextFieldBase(state: ClothingViewState, type: Mutabl
 }
 
 @Composable
-fun LoadImageFromUriWithCoil(image: Bitmap) {
-    Image(
-        painter = rememberAsyncImagePainter(model = image),
+fun LoadImageFromUriWithCoil(imageData: ByteArray, size: Int = 300) {
+    val context = LocalContext.current
+    val bitmap = remember(imageData) {
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+            BitmapFactory.decodeByteArray(imageData, 0, imageData.size, this)
+        }
+        val scaleFactor = max(options.outWidth, options.outHeight)/size
+
+        BitmapFactory.decodeByteArray(imageData, 0, imageData.size, options.apply {
+            inJustDecodeBounds = false
+            inSampleSize = scaleFactor
+        })
+    }
+
+    AsyncImage(
+        model = ImageRequest.Builder(context).data(bitmap).crossfade(true).build(),
         contentDescription = null,
-        modifier = Modifier
-            .width(100.dp)
+        placeholder = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.clip(CircleShape)
     )
 }
