@@ -1,5 +1,6 @@
 package com.thekempter.virtualwardrobe.data
 
+import com.thekempter.virtualwardrobe.data.room.BrandDao
 import com.thekempter.virtualwardrobe.data.room.ClothingDao
 import com.thekempter.virtualwardrobe.data.room.ImageDao
 import com.thekempter.virtualwardrobe.data.room.OutfitDao
@@ -12,7 +13,8 @@ class WardrobeRepository(
     private val clothingDao: ClothingDao,
     private val outfitDao: OutfitDao,
     private val seasonDao: SeasonDao,
-    private val imageDao: ImageDao
+    private val imageDao: ImageDao,
+    private val brandDao: BrandDao
     ){
     val allClothes = clothingDao.getAllClothes()
     val allTypes = clothingDao.getAllTypes()
@@ -41,6 +43,12 @@ class WardrobeRepository(
     suspend fun addClothingImage(item: ClothingImage) {
         return withContext(Dispatchers.IO){
             imageDao.insert(item)
+        }
+    }
+
+    suspend fun addBrand(brand: Brand) {
+        return withContext(Dispatchers.IO){
+            brandDao.upsertBrand(brand)
         }
     }
 

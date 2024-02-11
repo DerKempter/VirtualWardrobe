@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingItemSeasonCrossRef
 import com.thekempter.virtualwardrobe.data.ClothingType
@@ -18,7 +19,8 @@ import com.thekempter.virtualwardrobe.data.Season
         Outfit::class,
         Season::class,
         ClothingItemSeasonCrossRef::class,
-        ClothingImage::class
+        ClothingImage::class,
+        Brand::class
                ],
     version = 1,
     exportSchema = true
@@ -28,6 +30,7 @@ abstract class WardrobeDatabase : RoomDatabase() {
     abstract fun outfitDao(): OutfitDao
     abstract fun seasonDao(): SeasonDao
     abstract fun imageDao(): ImageDao
+    abstract fun brandDao(): BrandDao
 
     companion object {
         @Volatile
