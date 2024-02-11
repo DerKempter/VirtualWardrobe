@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewModelScope
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingImage
 import com.thekempter.virtualwardrobe.data.ClothingImageTypeConverter
 import com.thekempter.virtualwardrobe.data.ClothingItem
@@ -66,7 +67,7 @@ class AddClothingItemActivity : ComponentActivity() {
     var name = mutableStateOf("")
     var type = mutableStateOf(ClothingType(-1, "dummy"))
     var color = mutableStateOf("")
-    var brand = mutableStateOf("")
+    var brand = mutableStateOf(Brand(id = -1, name = ""))
     var size = mutableStateOf("")
     var material = mutableStateOf("")
     var imageUrl = mutableStateOf(Uri.parse(""))
@@ -92,12 +93,14 @@ class AddClothingItemActivity : ComponentActivity() {
                 val a = 1
             }
 
+            saveBrandToDatabase(clothingViewModel)
+
             val clothingType = type.value
             val clothingItem = ClothingItem(
                 name = name.value,
                 material = material.value,
                 color = color.value,
-                brand = brand.value,
+                brandId = brand.value.id,
                 size = size.value,
                 imageId = clothingImage.id,
                 typeId = clothingType.id
@@ -128,6 +131,10 @@ class AddClothingItemActivity : ComponentActivity() {
             "saved bitmap to database: ${byteArray.size} bytes"
         )
         return clothingImage
+    }
+
+    private suspend fun saveBrandToDatabase(clothingViewModel: ClothingViewModel){
+        clothingViewModel.addBrand(brand.value)
     }
 
     @Preview(showBackground = true)

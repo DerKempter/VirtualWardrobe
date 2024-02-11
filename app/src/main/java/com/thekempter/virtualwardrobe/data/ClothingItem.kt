@@ -3,6 +3,7 @@ package com.thekempter.virtualwardrobe.data
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -19,7 +20,16 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["imageId"],
             onUpdate = CASCADE
+        ),
+        ForeignKey(
+            entity = Brand::class,
+            parentColumns = ["id"],
+            childColumns = ["brandId"],
+            onUpdate = CASCADE
         )
+    ],
+    indices = [
+        Index("id"), Index("typeId"), Index("imageId")
     ]
 )
 data class ClothingItem(
@@ -27,8 +37,8 @@ data class ClothingItem(
     val name: String,
     val typeId: Int, // foreign key to clothing_type table
     val color: String,
-    val brand: String,
+    val brandId: Int, // foreign key to brand table
     val size: String,
     val material: String,
-    val imageId: Int
+    val imageId: Int // foreign key to column clothing_image
 )

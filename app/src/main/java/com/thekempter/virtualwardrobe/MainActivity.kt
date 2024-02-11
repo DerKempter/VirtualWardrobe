@@ -201,7 +201,7 @@ class MainActivity : ComponentActivity() {
                 "Blaue Hose",
                 0,
                 "blue",
-                "NewYorker",
+                -1,
                 "10",
                 "cotton",
                 -1

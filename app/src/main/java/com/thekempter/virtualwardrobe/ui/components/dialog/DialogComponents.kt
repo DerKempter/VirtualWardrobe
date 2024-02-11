@@ -7,7 +7,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.MediaStore
@@ -62,6 +61,7 @@ import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewModelFactory
 import com.thekempter.virtualwardrobe.ClothingViewState
 import com.thekempter.virtualwardrobe.Graph
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.ui.components.DropdownMenuWithOutlinedTextFieldBase
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
@@ -80,7 +80,7 @@ fun AddClothingItemUi(
     state: ClothingViewState,
     name: MutableState<String>,
     color: MutableState<String>,
-    brand: MutableState<String>,
+    brand: MutableState<Brand>,
     size: MutableState<String>,
     material: MutableState<String>,
     type: MutableState<ClothingType>,
@@ -134,12 +134,7 @@ fun AddClothingItemUi(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        OutlinedTextField(
-                            value = brand.value,
-                            onValueChange = { brand.value = it },
-                            label = { Text("Brand") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        DropdownMenuWithOutlinedTextFieldBase(state = state, brand = brand)
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedTextField(
                             value = size.value,
@@ -161,7 +156,9 @@ fun AddClothingItemUi(
                 }
             },
             bottomBar = {
-                Row(modifier = Modifier.fillMaxWidth().padding(16.dp),horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),horizontalArrangement = Arrangement.SpaceBetween) {
                     Button(
                         onClick = {  },
                         modifier = Modifier
@@ -238,7 +235,7 @@ fun AddClothingItemScreen(
     name: MutableState<String>,
     type: MutableState<ClothingType>,
     color: MutableState<String>,
-    brand: MutableState<String>,
+    brandId: MutableState<Brand>,
     size: MutableState<String>,
     material: MutableState<String>,
     imageUrl: MutableState<Uri>,
@@ -316,7 +313,7 @@ fun AddClothingItemScreen(
         state,
         name,
         color,
-        brand,
+        brandId,
         size,
         material,
         type,

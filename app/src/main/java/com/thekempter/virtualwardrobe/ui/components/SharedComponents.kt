@@ -39,6 +39,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewState
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.Season
@@ -73,7 +74,7 @@ fun ClothingItemDisplay(
                     Spacer(modifier = Modifier.padding(6.dp))
                     Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.padding(6.dp))
-                    Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
+                    Text(text = clothingItem.brandId.toString(), style = MaterialTheme.typography.bodyMedium) // ToDo
                 }
                 Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
                     Text(
@@ -114,9 +115,9 @@ fun ClothingItemDetailView(clothingItem: ClothingItem, clothingViewModel: Clothi
             Text(text = clothingItem.name, style = MaterialTheme.typography.headlineMedium)
             Text(text = clothingItem.color, style = MaterialTheme.typography.bodyMedium)
             Text(text = clothingItem.material, style = MaterialTheme.typography.bodyMedium)
-            Text(text = clothingItem.brand, style = MaterialTheme.typography.bodyMedium)
+            Text(text = clothingItem.brandId.toString(), style = MaterialTheme.typography.bodyMedium)
             Text(text = clothingItem.size, style = MaterialTheme.typography.bodyMedium)
-            //Text(text = clothingType.name, style = MaterialTheme.typography.bodyMedium)
+            Text(text = clothingItem.typeId.toString(), style = MaterialTheme.typography.bodyMedium)
 //            MultiSelect(
 //                items = allSeasonsStrings,
 //                selectedItems = seasons.map { it.name }.toSet(),
@@ -168,13 +169,70 @@ fun MultiSelect(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DropdownMenuWithOutlinedTextFieldBase(state: ClothingViewState, type: MutableState<ClothingType>){
+fun DropdownMenuWithOutlinedTextFieldBase(state: ClothingViewState, type: MutableState<ClothingType>? = null, brand: MutableState<Brand>? = null){
+    if (type != null) DropdownMenuWithOutlinedTextFieldClothingType(state, type)
+    if (brand != null) DropdownMenuWithOutlinedTextFieldBrand(state, brand)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DropdownMenuWithOutlinedTextFieldClothingType(state: ClothingViewState, type: MutableState<ClothingType>){
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf(type.value) }
+    var types by remember { mutableStateOf(state.clothingTypes) }
     OutlinedTextField(
         value = selectedOption.name,
         label = { Text(text = "Type") },
-        onValueChange = {},
+        onValueChange = { query ->
+            types = state.clothingTypes.filter { it.name.contains(query) }
+        },
+        modifier = Modifier
+            .clickable(
+                onClick = {
+                    expanded = true
+                }
+            )
+            .fillMaxSize(),
+        enabled = true,
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    )
+    DropdownMenu(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        expanded = expanded,
+        onDismissRequest = { expanded = !expanded },
+        properties = PopupProperties(focusable = true),
+    ) {
+        types.forEach { type ->
+            DropdownMenuItem(
+                onClick = {
+                    selectedOption = type
+                    expanded = !expanded
+                },
+                text = { Text(text = type.name) }
+            )
+        }
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DropdownMenuWithOutlinedTextFieldBrand(state: ClothingViewState, brand: MutableState<Brand>){
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf(brand.value) }
+    var brands by remember { mutableStateOf(state.brands) }
+    OutlinedTextField(
+        value = selectedOption.name,
+        label = { Text(text = "Type") },
+        onValueChange = { query ->
+            brands = state.brands.filter { it.name.contains(query) }
+        },
         modifier = Modifier
             .clickable(
                 onClick = {
@@ -190,13 +248,14 @@ fun DropdownMenuWithOutlinedTextFieldBase(state: ClothingViewState, type: Mutabl
         )
     )
     DropdownMenu(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .height(200.dp),
         expanded = expanded,
         onDismissRequest = { expanded = !expanded },
         properties = PopupProperties(focusable = true),
     ) {
-        state.clothingTypes.forEach { type ->
+        state.brands.forEach { type ->
             DropdownMenuItem(
                 onClick = {
                     selectedOption = type

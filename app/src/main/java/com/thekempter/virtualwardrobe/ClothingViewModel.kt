@@ -22,9 +22,9 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
     val state: StateFlow<ClothingViewState>
         get() = _state
 
-    val clothes = repository.allClothes
-    val clothingTypes = repository.allTypes
-    var currentClothingItem: ClothingItem = ClothingItem(id = -1, name = "", typeId = -1, color = "", brand = "", size = "", material = "", imageId = -1)
+    private val clothes = repository.allClothes
+    private val clothingTypes = repository.allTypes
+    var currentClothingItem: ClothingItem = ClothingItem(id = -1, name = "", typeId = -1, color = "", brandId = -1, size = "", material = "", imageId = -1)
 
     init {
         viewModelScope.launch {
