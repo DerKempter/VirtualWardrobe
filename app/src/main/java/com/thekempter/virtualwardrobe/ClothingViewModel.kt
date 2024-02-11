@@ -3,6 +3,7 @@ package com.thekempter.virtualwardrobe
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.ClothingImage
@@ -45,6 +46,8 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
 
     suspend fun addClothingImage(clothingImage: ClothingImage) = repository.addClothingImage(clothingImage)
 
+    suspend fun addBrand(brand: Brand) = repository.addBrand(brand)
+
     fun getSeasonsForClothingId(clothingId: Int, callback: (List<Season>) -> Unit) = viewModelScope.launch {
         val result = repository.getSeasonsByClothingId(clothingId)
         callback(result)
@@ -74,5 +77,6 @@ class ClothingViewModelFactory(private val repository: WardrobeRepository): View
 
 data class ClothingViewState(
     val clothes: List<ClothingItem> = emptyList(),
-    val clothingTypes: List<ClothingType> = emptyList()
+    val clothingTypes: List<ClothingType> = emptyList(),
+    val brands: List<Brand> = emptyList()
 )

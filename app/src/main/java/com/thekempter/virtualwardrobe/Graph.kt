@@ -12,7 +12,8 @@ object Graph {
             database.clothingDao(),
             database.outfitDao(),
             database.seasonDao(),
-            database.imageDao()
+            database.imageDao(),
+            database.brandDao()
         )
     }
 
