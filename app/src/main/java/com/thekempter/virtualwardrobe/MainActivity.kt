@@ -5,9 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Build
@@ -98,8 +96,7 @@ class MainActivity : ComponentActivity() {
         val currentRoute = backStackEntry.value?.destination?.route
         VirtualWardrobeTheme {
             Scaffold(
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars),
+                modifier = Modifier,
                 bottomBar = {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background
@@ -170,39 +167,44 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-                },
-                content = {
-                    NavHost(navController = navController, startDestination = items.first().route){
-                        items.forEach{ item ->
-                            composable(item.route) {
-                                when(item.route) {
-                                    "home" -> HomeScreen()
-                                    "collection" -> CollectionScreen(clothingViewModel, navController)
-                                    "outfits" -> OutfitScreen()
-                                    "settings" -> SettingsScreen()
-                                }
+                }
+            )
+            { innerPadding ->
+                NavHost(
+                    modifier = Modifier
+                        .padding(innerPadding),
+                    navController = navController,
+                    startDestination = items.first().route
+                ){
+                    items.forEach{ item ->
+                        composable(item.route) {
+                            when(item.route) {
+                                "home" -> HomeScreen()
+                                "collection" -> CollectionScreen(clothingViewModel, navController)
+                                "outfits" -> OutfitScreen()
+                                "settings" -> SettingsScreen()
                             }
                         }
-                        composable("itemDetail/{item}") { backStackEntry ->
-                            val itemId = backStackEntry.arguments?.getString("item")
-                            itemId?.let {
-                                val item: ClothingItem = clothingViewModel.currentClothingItem
-                                val state = clothingViewModel.state.collectAsState()
-                                val clothingType = state.value.clothingTypes.first { it.id == item.typeId }
-                                val brand = state.value.brands.first { it.id == item.brandId }
-                                if (item.id.toString() == itemId){
-                                    ClothingItemDetailView(
-                                        clothingItem = item,
-                                        clothingViewModel = clothingViewModel,
-                                        clothingType = clothingType,
-                                        brand = brand
-                                    )
-                                }
+                    }
+                    composable("itemDetail/{item}") { backStackEntry ->
+                        val itemId = backStackEntry.arguments?.getString("item")
+                        itemId?.let {
+                            val item: ClothingItem = clothingViewModel.currentClothingItem
+                            val state = clothingViewModel.state.collectAsState()
+                            val clothingType = state.value.clothingTypes.first { it.id == item.typeId }
+                            val brand = state.value.brands.first { it.id == item.brandId }
+                            if (item.id.toString() == itemId){
+                                ClothingItemDetailView(
+                                    clothingItem = item,
+                                    clothingViewModel = clothingViewModel,
+                                    clothingType = clothingType,
+                                    brand = brand
+                                )
                             }
                         }
                     }
                 }
-            )
+            }
         }
     }
 
