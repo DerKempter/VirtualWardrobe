@@ -240,7 +240,8 @@ fun DropdownMenuWithOutlinedTextFieldClothingType(state: ClothingViewState, type
             ),
             border = BorderStroke(1.dp, Color.Black),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground
             )
         ) {
             LazyColumn(
