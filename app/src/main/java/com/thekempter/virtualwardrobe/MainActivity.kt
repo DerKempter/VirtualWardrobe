@@ -5,6 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Build
@@ -20,12 +23,15 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.thekempter.virtualwardrobe.ui.theme.VirtualWardrobeTheme
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -44,6 +50,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             val clothingViewModel = viewModel(ClothingViewModel::class.java, factory = ClothingViewModelFactory(Graph.wardrobeRepo))
             val navController = rememberNavController()
@@ -91,6 +98,8 @@ class MainActivity : ComponentActivity() {
         val currentRoute = backStackEntry.value?.destination?.route
         VirtualWardrobeTheme {
             Scaffold(
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.statusBars),
                 bottomBar = {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background
