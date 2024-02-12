@@ -209,8 +209,7 @@ fun DropdownMenuWithOutlinedTextFieldClothingType(state: ClothingViewState, type
         value = selectedOption.name,
         label = { Text(text = "Type") },
         onValueChange = { query ->
-            types = if (query.isEmpty()) state.clothingTypes
-            else state.clothingTypes.filter { it.name.lowercase().contains(query.lowercase()) }
+            types = state.clothingTypes.filter { it.name.lowercase().contains(query.lowercase()) }
             expanded = types.isNotEmpty()
             selectedOption = ClothingType(name = query)
         },
@@ -226,7 +225,12 @@ fun DropdownMenuWithOutlinedTextFieldClothingType(state: ClothingViewState, type
             disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
-        trailingIcon = { IconButton(onClick = { expanded = !expanded }) {
+        trailingIcon = { IconButton(onClick = {
+            types = state.clothingTypes.filter {
+                it.name.lowercase().contains(selectedOption.name.lowercase())
+            }
+            expanded = !expanded
+        }) {
             Icon(imageVector = Icons.Rounded.ArrowDropDown, contentDescription = "Expand Dropdown")
         }}
     )
