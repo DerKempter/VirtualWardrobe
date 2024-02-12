@@ -1,14 +1,11 @@
 package com.thekempter.virtualwardrobe.ui.components.collection
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.data.util.getBrandForClothing
 import com.thekempter.virtualwardrobe.data.util.getClothingTypeForClothing
