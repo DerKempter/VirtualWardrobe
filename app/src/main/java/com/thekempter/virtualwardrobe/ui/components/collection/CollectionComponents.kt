@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.thekempter.virtualwardrobe.ClothingViewModel
+import com.thekempter.virtualwardrobe.data.util.getBrandForClothing
 import com.thekempter.virtualwardrobe.data.util.getClothingTypeForClothing
 import com.thekempter.virtualwardrobe.data.util.getSeasonsForClothing
 import com.thekempter.virtualwardrobe.ui.components.ClothingItemDisplay
@@ -23,8 +24,9 @@ fun CollectionScreen(clothingViewModel: ClothingViewModel, navController: NavCon
         items(items = allClothes, key = {it.id}) { clothingItem ->
             val seasons = getSeasonsForClothing(clothingViewModel, clothingItem.id)
             val clothingType = getClothingTypeForClothing(state, clothingItem.typeId)
+            val brand = getBrandForClothing(state, clothingItem.brandId)
 
-            ClothingItemDisplay(clothingItem, seasons, clothingType, clothingViewModel, navController)
+            ClothingItemDisplay(clothingItem, seasons, clothingType, brand, clothingViewModel, navController)
         }
     }
 }

@@ -20,18 +20,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imeNestedScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +73,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.reflect.KSuspendFunction1
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,33 +101,30 @@ fun AddClothingItemUi(
     VirtualWardrobeTheme{
         Scaffold(
             content = {
-                Box(
-                    modifier = Modifier
-                ) {
-                    ImageBuilderWithPermission(imageBitmap,
-                        name,
-                        imageUri,
-                        launcherGallery,
-                        launcherCamera,
-                        scrollState,
-                        context,
-                        permissionLauncher,
-                        permissionGranted
-                    )
+                Box {
                     Column(
                         modifier = Modifier
                             .padding(16.dp)
-                            .padding(bottom = 40.dp)
-                            .padding(top = (400 - scrollState.value).coerceAtLeast(150).dp)
-                            .verticalScroll(scrollState)
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .imePadding(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        ImageBuilderWithPermission(imageBitmap,
+                            name,
+                            imageUri,
+                            launcherGallery,
+                            launcherCamera,
+                            scrollState,
+                            context,
+                            permissionLauncher,
+                            permissionGranted
+                        )
                         OutlinedTextField(
                             value = name.value,
                             onValueChange = { name.value = it },
                             label = { Text("Name") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         DropdownMenuWithOutlinedTextFieldBase(state = state, type = type)
@@ -131,7 +133,8 @@ fun AddClothingItemUi(
                             value = color.value,
                             onValueChange = { color.value = it },
                             label = { Text("Color") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         DropdownMenuWithOutlinedTextFieldBase(state = state, brand = brand)
@@ -140,14 +143,16 @@ fun AddClothingItemUi(
                             value = size.value,
                             onValueChange = { size.value = it },
                             label = { Text("Size") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedTextField(
                             value = material.value,
                             onValueChange = { material.value = it },
                             label = { Text("Material") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                         )
                     }
                     Spacer(
@@ -156,9 +161,12 @@ fun AddClothingItemUi(
                 }
             },
             bottomBar = {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp
+                    ),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
                     Button(
                         onClick = {  },
                         modifier = Modifier
@@ -235,7 +243,7 @@ fun AddClothingItemScreen(
     name: MutableState<String>,
     type: MutableState<ClothingType>,
     color: MutableState<String>,
-    brandId: MutableState<Brand>,
+    brand: MutableState<Brand>,
     size: MutableState<String>,
     material: MutableState<String>,
     imageUrl: MutableState<Uri>,
@@ -252,11 +260,7 @@ fun AddClothingItemScreen(
     val context = LocalContext.current
     Log.d("AddClothingActivity", "value of allTypes: ${state.clothingTypes}")
 
-    try {
-        type.value = state.clothingTypes.first()
-    } catch (e: NoSuchElementException){
-        type.value = ClothingType(-1, "")
-    }
+    type.value = ClothingType(-1, "")
 
 
     val launcherGallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()){
@@ -313,7 +317,7 @@ fun AddClothingItemScreen(
         state,
         name,
         color,
-        brandId,
+        brand,
         size,
         material,
         type,

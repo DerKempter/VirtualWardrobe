@@ -21,6 +21,7 @@ class WardrobeRepository(
     val allSeasons = seasonDao.getAllSeasons()
     val allOutfits = outfitDao.getAllOutfits()
     val allImages = imageDao.getAllImages()
+    val allBrands = brandDao.getAllBrands()
 
     suspend fun addClothing(item: ClothingItem) {
         return withContext(Dispatchers.IO){
@@ -46,9 +47,9 @@ class WardrobeRepository(
         }
     }
 
-    suspend fun addBrand(brand: Brand) {
+    suspend fun addBrand(brand: Brand): Long {
         return withContext(Dispatchers.IO){
-            brandDao.upsertBrand(brand)
+            return@withContext brandDao.upsertBrand(brand)
         }
     }
 

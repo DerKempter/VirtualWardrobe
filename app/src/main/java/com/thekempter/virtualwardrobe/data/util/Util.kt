@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.thekempter.virtualwardrobe.ClothingViewModel
 import com.thekempter.virtualwardrobe.ClothingViewState
+import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingImage
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.data.Season
@@ -40,6 +41,13 @@ fun getLatestImage(clothingViewModel: ClothingViewModel): List<ClothingImage> {
 
 fun getClothingTypeForClothing(state: ClothingViewState, typeId: Int): ClothingType {
     return state.clothingTypes.find { type -> type.id == typeId } ?: ClothingType(
+        -1,
+        "missing Type"
+    )
+}
+
+fun getBrandForClothing(state: ClothingViewState, brandId: Int): Brand {
+    return state.brands.find { brand -> brand.id == brandId } ?: Brand(
         -1,
         "missing Type"
     )

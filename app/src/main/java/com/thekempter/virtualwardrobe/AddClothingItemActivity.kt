@@ -1,20 +1,15 @@
 package com.thekempter.virtualwardrobe
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewModelScope
 import com.thekempter.virtualwardrobe.data.Brand
 import com.thekempter.virtualwardrobe.data.ClothingImage
@@ -22,14 +17,7 @@ import com.thekempter.virtualwardrobe.data.ClothingImageTypeConverter
 import com.thekempter.virtualwardrobe.data.ClothingItem
 import com.thekempter.virtualwardrobe.data.ClothingType
 import com.thekempter.virtualwardrobe.ui.components.dialog.AddClothingItemScreen
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
 
 class AddClothingItemActivity : ComponentActivity() {
 
@@ -88,19 +76,16 @@ class AddClothingItemActivity : ComponentActivity() {
         clothingViewModel.viewModelScope.launch {
             val clothingImageList = saveImageToDatabase(clothingViewModel)
             val clothingImage = clothingImageList.first()
-            if (clothingImage.id == -1){
-                // TODO popup alert
-                val a = 1
-            }
 
-            saveBrandToDatabase(clothingViewModel)
+            val brandId = saveBrandToDatabase(clothingViewModel)
+            Log.d("onSaveButtonClicked", "Brand Id stored in DB: $brandId")
 
             val clothingType = type.value
             val clothingItem = ClothingItem(
                 name = name.value,
                 material = material.value,
                 color = color.value,
-                brandId = brand.value.id,
+                brandId = brandId.toInt(),
                 size = size.value,
                 imageId = clothingImage.id,
                 typeId = clothingType.id
@@ -133,8 +118,11 @@ class AddClothingItemActivity : ComponentActivity() {
         return clothingImage
     }
 
-    private suspend fun saveBrandToDatabase(clothingViewModel: ClothingViewModel){
-        clothingViewModel.addBrand(brand.value)
+    private suspend fun saveBrandToDatabase(clothingViewModel: ClothingViewModel): Long {
+        val brandToSave = Brand(name = brand.value.name)
+        val brandId = clothingViewModel.addBrand(brandToSave)
+        Log.d("saveBrandToDatabase", "Storing Brand to DB: $brandToSave")
+        return brandId
     }
 
     @Preview(showBackground = true)
