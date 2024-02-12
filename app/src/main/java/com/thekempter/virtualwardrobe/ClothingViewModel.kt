@@ -24,12 +24,13 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
 
     private val clothes = repository.allClothes
     private val clothingTypes = repository.allTypes
+    private val brands = repository.allBrands
     var currentClothingItem: ClothingItem = ClothingItem(id = -1, name = "", typeId = -1, color = "", brandId = -1, size = "", material = "", imageId = -1)
 
     init {
         viewModelScope.launch {
-            combine(clothes, clothingTypes) { clothes: List<ClothingItem>, clothingTypes: List<ClothingType> ->
-                ClothingViewState(clothes, clothingTypes)
+            combine(clothes, clothingTypes, brands) { clothes: List<ClothingItem>, clothingTypes: List<ClothingType>, brands: List<Brand> ->
+                ClothingViewState(clothes, clothingTypes, brands)
             }.collect {
                 _state.value = it
             }
@@ -46,7 +47,7 @@ class ClothingViewModel(private val repository: WardrobeRepository = Graph.wardr
 
     suspend fun addClothingImage(clothingImage: ClothingImage) = repository.addClothingImage(clothingImage)
 
-    suspend fun addBrand(brand: Brand) = repository.addBrand(brand)
+    suspend fun addBrand(brand: Brand): Long = repository.addBrand(brand)
 
     fun getSeasonsForClothingId(clothingId: Int, callback: (List<Season>) -> Unit) = viewModelScope.launch {
         val result = repository.getSeasonsByClothingId(clothingId)

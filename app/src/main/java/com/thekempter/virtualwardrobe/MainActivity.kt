@@ -187,10 +187,15 @@ class MainActivity : ComponentActivity() {
                             val itemId = backStackEntry.arguments?.getString("item")
                             itemId?.let {
                                 val item: ClothingItem = clothingViewModel.currentClothingItem
+                                val state = clothingViewModel.state.collectAsState()
+                                val clothingType = state.value.clothingTypes.first { it.id == item.typeId }
+                                val brand = state.value.brands.first { it.id == item.brandId }
                                 if (item.id.toString() == itemId){
                                     ClothingItemDetailView(
                                         clothingItem = item,
-                                        clothingViewModel = clothingViewModel
+                                        clothingViewModel = clothingViewModel,
+                                        clothingType = clothingType,
+                                        brand = brand
                                     )
                                 }
                             }
